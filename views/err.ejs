@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found | V-Blogger</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="/favicon.ico">
+</head>
+<body>
+    <%- include('header') %>
+    <main>
+        <article>
+            <h2><pre><%- err %></pre></h2>
+            <h3><%- title %></h3>
+            <p><%- description %></p>
+            <a href="/" class="button">Back to Home</a>
+            <% if (is501) { %>
+                <a href="<%- devLink %>">To Development Version</a>
+            <% } %>
+        </article>
+    </main>
+    <%- include('footer') %>
+</body>
+</html>
