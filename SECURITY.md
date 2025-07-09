@@ -3,10 +3,12 @@
 ## Supported Versions
 
 Only versions `1.1.0` and above have secure password hashing.
+Direct messages are not encrypted (yet).
 
 | Version         | Supported            |
 | --------------- | -------------------- |
-| 1.1.0 >         | SHA1 Backend Hashing |
+| 1.3.0 >         | No DM encryption     |
+| 1.1.0 -> 1.3.0  | SHA1 Backend Hashing |
 | < 1.1.0         | No security          |
 
 ## Reporting Issues
