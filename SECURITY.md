@@ -8,3 +8,9 @@ Only versions `1.1.0` and above have secure password hashing.
 | --------------- | -------------------- |
 | 1.1.0 >         | SHA1 Backend Hashing |
 | < 1.1.0         | No security          |
+
+## Reporting Issues
+
+If the issue is minor, then feel free to open an issue.
+However, if you feel that the issue is too major, then please email me directly at vishesh.kudva@outlook.com, and I will look into it.
+Please remember that this is a hobby project that I made, and security is not my primary concern.
