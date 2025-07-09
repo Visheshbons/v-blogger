@@ -3,6 +3,38 @@ import express from 'express';
 import chalk from 'chalk';
 import fs from 'fs';
 
+
+
+const userFilePath = './users.json';
+function loadUsers() {
+    if (fs.existsSync(userFilePath)) {
+        const data = fs.readFileSync(userFilePath, 'utf-8');
+        return JSON.parse(data);
+    }
+    return [];
+}
+
+function saveUsers(users) {
+    fs.writeFileSync(userFilePath, JSON.stringify(users, null, 2), 'utf-8');
+}
+
+class User {
+    constructor(username, password, id = users.length + 1) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+    }
+}
+
+let users = loadUsers();
+
+
+
+
+
+
+
+
 const postsFilePath = './posts.json';
 
 // Function to load posts from the file
@@ -24,11 +56,13 @@ class Post {
         this.title = title;
         this.content = content;
         this.date = date;
-        this.author = author;
+        this.author = users.find(user => user.id === author)?.username || 'Anonymous';
     };
 };
 
-let posts = loadPosts();
+let posts = loadPosts().map(
+  post => new Post(post.title, post.content, post.author, post.date)
+);
 
 function dateConversion() {
     document.addEventListener('DOMContentLoaded', () => {
@@ -41,4 +75,6 @@ function dateConversion() {
     });
 };
 
-export { Post, posts, savePosts, dateConversion };
+
+
+export { Post, posts, savePosts, dateConversion, User, users, saveUsers };

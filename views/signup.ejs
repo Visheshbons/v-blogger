@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <title>Signup | V-Blogger</title>
+</head>
+<body>
+    <%- include('header.ejs') %>
+    <main>
+        <h2>Signup</h2>
+        <article>
+            <form action="/signup" method="POST">
+                <div>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Signup</button>
+            </form>
+        </article>
+        <article>
+            <p>Already have an account? <a href="/login">Login here</a>.</p>
+        </article>
+    </main>
+    <%- include('footer.ejs') %>
+</body>
+</html>

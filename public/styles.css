@@ -116,6 +116,7 @@ form label {
 }
 
 form input[type="text"],
+form input[type="password"],
 form textarea {
     padding: 10px;
     margin-bottom: 10px;

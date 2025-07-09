@@ -1,7 +1,7 @@
 import express from 'express';
 import chalk from 'chalk';
 import { statusCode } from './errors.js';
-import { Post, posts, savePosts, dateConversion } from './appConfig.js';
+import { Post, posts, savePosts, dateConversion, User, users, saveUsers } from './appConfig.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
     statusCode(req, res, 200);
-    res.render('index.ejs', { posts });
+    res.render('index.ejs', { posts, users });
 });
 
 app.get('/post', (req, res) => {
@@ -30,6 +30,40 @@ app.get('/post', (req, res) => {
     savePosts(posts);
     console.log(`New post added: ${title}`);
     res.status(201).redirect("/");
+});
+
+app.get('/login', (req, res) => {
+    statusCode(req, res, 200);
+    res.render('login.ejs');
+}).post('/login', (req, res) => {
+    statusCode(req, res, 202);
+    const { username, password } = req.body;
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) {
+        return res.status(401).send('Invalid username or password!');
+    }
+    console.log(`User logged in: ${username}`);
+    res.status(200).redirect("/");
+});
+
+app.get('/signup', (req, res) => {
+    statusCode(req, res, 200);
+    res.render('signup.ejs');
+}).post('/signup', (req, res) => {
+    statusCode(req, res, 202);
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).send('Username and password are required!');
+    }
+    const existingUser = users.find(u => u.username === username);
+    if (existingUser) {
+        return res.status(409).send('Username already exists!');
+    }
+    const newUser = new User(username, password);
+    users.push(newUser);
+    saveUsers(users);
+    console.log(`New user signed up: ${chalk.greenBright(username)}`);
+    res.status(201).redirect("/login");
 });
 
 app.get('/error', (req, res, next) => {
