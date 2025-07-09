@@ -185,6 +185,7 @@ app.get('/chats/:userID', (req, res) => {
         return res.status(404).send('Chat not found!');
     }
     const newMessage = new Message(chatId, from, content);
+    console.log(`New message from user ${chalk.greenBright(from)} in chat ${chalk.greenBright(chatId)}: ${chalk.grey(content)}`);
     chat.messages.push(newMessage);
     saveChats(chats);
     res.status(201).json(newMessage);

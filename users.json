@@ -13,5 +13,10 @@
     "id": 3,
     "username": "Madhu",
     "password": "60b6cde6eda7cb65402f8695a021804371a420ab"
+  },
+  {
+    "id": 4,
+    "username": "Test User",
+    "password": "6ebfe5e505b06fbd6bef17c2d5ed959c3b1f2346"
   }
 ]

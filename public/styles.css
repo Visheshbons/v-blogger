@@ -71,6 +71,14 @@ article {
     border-radius: 15px;
 }
 
+article .sent {
+    margin-left: 35%; 
+}
+
+article .received {
+    margin-right: 35%; 
+}
+
 h2 {
     color: #333;
     border-bottom: 2px solid #333;

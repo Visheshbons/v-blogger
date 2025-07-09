@@ -92,12 +92,15 @@
             const chat = chats.find(c => c.id === chatId);
             if (!chat) return;
             const otherId = chat.users.find(id => id !== userId);
-            let html = `<h3>Chat with User ${otherId}</h3>`;
+            let html = `<h3>Chat with User ${userId}</h3>`;
             html += '<article id="messages">';
             html += chat.messages.map(m =>
-                `<article><b>${m.from === userId ? 'You' : 'Them'}:</b> ${m.content} <small>(${new Date(m.date).toLocaleString()})</small></article>`
+                `<article class="${m.from === userId ? 'sent' : 'received'}"><b>${m.from === userId ? 'You' : 'Them'}:</b> ${m.content} <br><small>(${new Date(m.date).toLocaleString()})</small></article>`
             ).join('');
-            html += '</article>';
+            html += `
+                <p><i><small>It seems you've reached the end</small></i></p>
+                </article>
+            `;
             html += `
                 <form onsubmit="sendMessage(event, ${chatId})">
                     <input type="text" id="msg-content" placeholder="Type a message..." required>

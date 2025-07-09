@@ -11,6 +11,81 @@
         "from": 1,
         "content": "Hello there",
         "date": "2025-07-09T09:35:13.671Z"
+      },
+      {
+        "chatID": 1,
+        "from": 2,
+        "content": "What are you doing",
+        "date": "2025-07-09T21:27:53.464Z"
+      },
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "I'm just chilling",
+        "date": "2025-07-09T21:30:19.171Z"
+      },
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "What about you",
+        "date": "2025-07-09T21:31:36.615Z"
+      },
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "What about you",
+        "date": "2025-07-09T21:31:37.216Z"
+      },
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "What about you bro",
+        "date": "2025-07-09T21:32:46.221Z"
+      },
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "R u alive",
+        "date": "2025-07-09T21:32:53.297Z"
+      },
+      {
+        "chatID": 1,
+        "from": 2,
+        "content": "Of course I am",
+        "date": "2025-07-09T21:40:44.561Z"
+      },
+      {
+        "chatID": 1,
+        "from": 2,
+        "content": "What are you doing?",
+        "date": "2025-07-09T21:40:57.829Z"
+      },
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "You dumb",
+        "date": "2025-07-09T21:42:01.788Z"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "users": [
+      2,
+      3
+    ],
+    "messages": [
+      {
+        "chatID": 2,
+        "from": 2,
+        "content": "Hi",
+        "date": "2025-07-09T21:43:40.182Z"
+      },
+      {
+        "chatID": 2,
+        "from": 2,
+        "content": "What are you doing",
+        "date": "2025-07-09T21:44:05.679Z"
       }
     ]
   }
