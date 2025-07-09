@@ -1,5 +1,6 @@
 import express from 'express';
 import chalk from 'chalk';
+import cookieParser from 'cookie-parser';
 import { statusCode } from './errors.js';
 import { Post, posts, savePosts, dateConversion, User, users, saveUsers } from './appConfig.js';
 
@@ -9,23 +10,44 @@ const port = process.env.PORT || 3000;
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
     statusCode(req, res, 200);
-    res.render('index.ejs', { posts, users });
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+        userLoggedInRN = false;
+    } else {
+        userLoggedInRN = true;
+    }
+    res.render('index.ejs', { 
+        posts,
+        users,
+        loggedIn: req.cookies.loggedIn || false,
+        userId: req.cookies.id || null,
+        userLoggedInRN
+     });
 });
 
 app.get('/post', (req, res) => {
     statusCode(req, res, 200);
-    res.render('post.ejs');
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+        userLoggedInRN = false;
+    } else {
+        userLoggedInRN = true;
+    }
+    res.render('post.ejs', { userLoggedInRN });
 }).post('/post', (req, res) => {
     statusCode(req, res, 202);
     console.log(req.body); // Debugging line
-    let { title, content, author } = req.body;
-    if (!title || !content || !author) {
+    let { title, content } = req.body;
+    if (!title || !content) {
         return res.status(400).send('Title and content are required!');
     }
-    const newPost = new Post(title, content, author);
+    const userId = req.cookies.id;
+    const user = users.find(u => u.id === userId);
+    const newPost = new Post(title, content, userId ? Number(userId) : null);
     posts.push(newPost);
     savePosts(posts);
     console.log(`New post added: ${title}`);
@@ -34,7 +56,13 @@ app.get('/post', (req, res) => {
 
 app.get('/login', (req, res) => {
     statusCode(req, res, 200);
-    res.render('login.ejs');
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+        userLoggedInRN = false;
+    } else {
+        userLoggedInRN = true;
+    }
+    res.render('login.ejs', { userLoggedInRN });
 }).post('/login', (req, res) => {
     statusCode(req, res, 202);
     const { username, password } = req.body;
@@ -43,12 +71,18 @@ app.get('/login', (req, res) => {
         return res.status(401).send('Invalid username or password!');
     }
     console.log(`User logged in: ${username}`);
-    res.status(200).redirect("/");
+    res.status(200).cookie('loggedIn', true).cookie('id', user.id).redirect("/");
 });
 
 app.get('/signup', (req, res) => {
     statusCode(req, res, 200);
-    res.render('signup.ejs');
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+        userLoggedInRN = false;
+    } else {
+        userLoggedInRN = true;
+    }
+    res.render('signup.ejs', { userLoggedInRN });
 }).post('/signup', (req, res) => {
     statusCode(req, res, 202);
     const { username, password } = req.body;
@@ -63,7 +97,14 @@ app.get('/signup', (req, res) => {
     users.push(newUser);
     saveUsers(users);
     console.log(`New user signed up: ${chalk.greenBright(username)}`);
-    res.status(201).redirect("/login");
+    res.status(201).cookie('loggedIn', true).cookie('id', newUser.id).redirect("/");
+});
+
+app.get('/logout', (req, res) => {
+    statusCode(req, res, 200);
+    res.clearCookie('loggedIn');
+    res.clearCookie('id');
+    res.redirect('/');
 });
 
 app.get('/error', (req, res, next) => {
