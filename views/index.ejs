@@ -9,7 +9,12 @@
 <body>
     <%- include('header') %>
     <main>
-        <h2>Welcome to V-Blogger</h2>
+        <% if (loggedIn && userId) { %>
+            <% const user = users.find(u => u.id == userId); %>
+            <h2>Welcome, <%= user ? user.username : 'User' %>!</h2>
+        <% } else { %>
+            <h2>Welcome to V-Blogger</h2>
+        <% } %>
         <p>Your one-stop solution for all blogging needs.</p>
         <article>
             <h3>Latest Blog Posts</h3>

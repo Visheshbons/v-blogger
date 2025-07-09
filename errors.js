@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import cookieParser from 'cookie-parser';
 
 const experimentalPages = {};
 
@@ -109,8 +110,15 @@ function statusCode(req, res, code, forced = false) {
             break;
         case 404:
             if (!forced) {
+                let userLoggedInRN;
+                if (!req.cookies.loggedIn) {
+                    userLoggedInRN = false;
+                } else {
+                    userLoggedInRN = true;
+                }
                 res.status(404).render('err.ejs', {
                     ...errData.ERR404,
+                    userLoggedInRN
                 });
             } else {
                 res.status(404).send('<center><pre>ERR_404_NOT_FOUND</pre></center>');
@@ -156,9 +164,16 @@ function statusCode(req, res, code, forced = false) {
             break;
         case 501:
             if (!forced) {
+                let userLoggedInRN;
+                if (!req.cookies.loggedIn) {
+                    userLoggedInRN = false;
+                } else {
+                    userLoggedInRN = true;
+                }
                 res.status(501).render('err.ejs', {
                     ...errData.ERR501,
                     devLink: experimentalPages[req.path] || null,
+                    userLoggedInRN
                 });
             } else {
                 res.status(501).send('<center><pre>ERR_501_NOT_IMPLEMENTED</pre></center>');
