@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import cookieParser from 'cookie-parser';
 import { statusCode } from './errors.js';
 import { Post, posts, savePosts, dateConversion, User, users, saveUsers } from './appConfig.js';
+import { SHA1 } from './sha1.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -62,11 +63,12 @@ app.get('/login', (req, res) => {
     } else {
         userLoggedInRN = true;
     }
-    res.render('login.ejs', { userLoggedInRN });
+    res.render('login.ejs', { userLoggedInRN, SHA1 });
 }).post('/login', (req, res) => {
     statusCode(req, res, 202);
-    const { username, password } = req.body;
-    const user = users.find(u => u.username === username && u.password === password);
+    console.log(req.body); // Debugging line
+    const { username, password_sha1 } = req.body;
+    const user = users.find(u => u.username === username && u.password === password_sha1);
     if (!user) {
         return res.status(401).send('Invalid username or password!');
     }
@@ -93,7 +95,7 @@ app.get('/signup', (req, res) => {
     if (existingUser) {
         return res.status(409).send('Username already exists!');
     }
-    const newUser = new User(username, password);
+    const newUser = new User(username, SHA1(password));
     users.push(newUser);
     saveUsers(users);
     console.log(`New user signed up: ${chalk.greenBright(username)}`);

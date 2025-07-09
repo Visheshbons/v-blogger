@@ -1,29 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/styles.css">
-    <title>Login | V-Blogger</title>
-</head>
-<body>
-    <%- include('header.ejs') %>
-    <main>
-        <h2>Login</h2>
-        <article>
-            <form action="/login" method="POST">
-                <div>
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required>
-                </div>
-                <div>
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
-                    <input type="hidden" id="password_sha1" name="password_sha1">
-                    <script>
-                    
-
-                    /**
+/**
 *  Secure Hash Algorithm (SHA1)
 *  http://www.webtoolkit.info/
 **/
@@ -182,29 +157,4 @@ function SHA1 (msg) {
     return temp.toLowerCase();
 }
 
-
-                    
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const form = document.querySelector('form[action="/login"]');
-                        if (form) {
-                            form.addEventListener('submit', function(e) {
-                                const pwdInput = document.getElementById('password');
-                                const sha1Input = document.getElementById('password_sha1');
-                                sha1Input.value = SHA1(pwdInput.value);
-                                pwdInput.removeAttribute('name'); // Prevent password from being sent
-                                pwdInput.value = '';
-                            });
-                        }
-                    });
-                    </script>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-        </article>
-        <article>
-            <p>Don't have an account? <a href="/signup">Signup here</a>.</p>
-        </article>
-    </main>
-    <%- include('footer.ejs') %>
-</body>
-</html>
+export { SHA1 };
