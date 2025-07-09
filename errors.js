@@ -96,15 +96,15 @@ function statusCode(req, res, code, forced = false) {
             break;
         // 4xx Client Error
         case 400:
-            res.status(400).send('<pre>ERR_400_BAD_REQUEST</pre>');
+            res.status(400).send('<center><pre>ERR_400_BAD_REQUEST</pre></center>');
             console.warn(`${chalk.red('ERR_400')}: the page ${req.path} had a bad request.`);
             break;
         case 401:
-            res.status(401).send('<pre>ERR_401_UNAUTHORIZED</pre>');
+            res.status(401).send('<center><pre>ERR_401_UNAUTHORIZED</pre></center>');
             console.warn(`${chalk.red('ERR_401')}: the page ${req.path} is unauthorized.`);
             break;
         case 403:
-            res.status(403).send('<pre>ERR_403_FORBIDDEN</pre>');
+            res.status(403).send('<center><pre>ERR_403_FORBIDDEN</pre></center>');
             console.warn(`${chalk.red('ERR_403')}: the page ${req.path} is forbidden.`);
             break;
         case 404:
@@ -113,45 +113,45 @@ function statusCode(req, res, code, forced = false) {
                     ...errData.ERR404,
                 });
             } else {
-                res.status(404).send('<pre>ERR_404_NOT_FOUND</pre>');
+                res.status(404).send('<center><pre>ERR_404_NOT_FOUND</pre></center>');
             };
             console.warn(`${chalk.red('ERR_404')}: the page ${req.path} was not found.`);
             break;
         case 405:
-            res.status(405).send('<pre>ERR_405_METHOD_NOT_ALLOWED</pre>');
+            res.status(405).send('<center><pre>ERR_405_METHOD_NOT_ALLOWED</pre></center>');
             console.warn(`${chalk.red('ERR_405')}: the method for ${req.path} is not allowed.`);
             break;
         case 406:
-            res.status(406).send('<pre>ERR_406_NOT_ACCEPTABLE</pre>');
+            res.status(406).send('<center><pre>ERR_406_NOT_ACCEPTABLE</pre></center>');
             console.warn(`${chalk.red('ERR_406')}: the page ${req.path} is not acceptable.`);
             break;
         case 408:
-            res.status(408).send('<pre>ERR_408_REQUEST_TIMEOUT</pre>');
+            res.status(408).send('<center><pre>ERR_408_REQUEST_TIMEOUT</pre></center>');
             console.warn(`${chalk.red('ERR_408')}: the page ${req.path} request timed out.`);
             break;
         case 409:
-            res.status(409).send('<pre>ERR_409_CONFLICT</pre>');
+            res.status(409).send('<center><pre>ERR_409_CONFLICT</pre></center>');
             console.warn(`${chalk.red('ERR_409')}: the page ${req.path} has a conflict.`);
             break;
         case 410:
-            res.status(410).send('<pre>ERR_410_GONE</pre>');
+            res.status(410).send('<center><pre>ERR_410_GONE</pre></center>');
             console.warn(`${chalk.red('ERR_410')}: the page ${req.path} is gone.`);
             break;
         case 418:
-            res.status(418).send('<pre>ERR_418_IM_A_TEAPOT</pre>');
+            res.status(418).send('<center><pre>ERR_418_IM_A_TEAPOT</pre></center>');
             console.warn(`${chalk.red('ERR_418')}: the page ${req.path} is a teapot.`);
             break;
         case 429:
-            res.status(429).send('<pre>ERR_429_TOO_MANY_REQUESTS</pre>');
+            res.status(429).send('<center><pre>ERR_429_TOO_MANY_REQUESTS</pre></center>');
             console.warn(`${chalk.red('ERR_429')}: too many requests for ${req.path}.`);
             break;
         case 451:
-            res.status(451).send('<pre>ERR_451_UNAVAILABLE_FOR_LEGAL_REASONS</pre>');
+            res.status(451).send('<center><pre>ERR_451_UNAVAILABLE_FOR_LEGAL_REASONS</pre></center>');
             console.warn(`${chalk.red('ERR_451')}: the page ${req.path} is unavailable for legal reasons.`);
             break;
         // 5xx Server Error
         case 500:
-            res.status(500).send('<pre>ERR_500_INTERNAL_SERVER_ERROR</pre>');
+            res.status(500).send('<center><pre>ERR_500_INTERNAL_SERVER_ERROR</pre></center>');
             console.error(`${chalk.magenta('ERR_500')}: internal server error at ${req.path}.`);
             break;
         case 501:
@@ -161,25 +161,25 @@ function statusCode(req, res, code, forced = false) {
                     devLink: experimentalPages[req.path] || null,
                 });
             } else {
-                res.status(501).send('<pre>ERR_501_NOT_IMPLEMENTED</pre>');
+                res.status(501).send('<center><pre>ERR_501_NOT_IMPLEMENTED</pre></center>');
             };
             console.error(`${chalk.magenta('ERR_501')}: the page ${req.path} is not implemented.`);
             break;
         case 502:
-            res.status(502).send('<pre>ERR_502_BAD_GATEWAY</pre>');
+            res.status(502).send('<center><pre>ERR_502_BAD_GATEWAY</pre></center>');
             console.error(`${chalk.magenta('ERR_502')}: bad gateway at ${req.path}.`);
             break;
         case 503:
-            res.status(503).send('<pre>ERR_503_SERVICE_UNAVAILABLE</pre>');
+            res.status(503).send('<center><pre>ERR_503_SERVICE_UNAVAILABLE</pre></center>');
             console.error(`${chalk.magenta('ERR_503')}: service unavailable at ${req.path}.`);
             break;
         case 504:
-            res.status(504).send('<pre>ERR_504_GATEWAY_TIMEOUT</pre>');
+            res.status(504).send('<center><pre>ERR_504_GATEWAY_TIMEOUT</pre></center>');
             console.error(`${chalk.magenta('ERR_504')}: gateway timeout at ${req.path}.`);
             break;
         default:
             if (code >= 400 && code < 600) {
-                res.send(`<pre>ERR_${code}_UNKNOWN</pre>`);
+                res.send(`<center><pre>ERR_${code}_UNKNOWN</pre></center>`);
             };
             console.warn(`${chalk.gray(`ERR_${code}`)}: the page ${req.path} returned an unknown status.`);
             break;

@@ -9,9 +9,22 @@
 <body>
     <%- include('header') %>
     <main>
+        <h2>Welcome to V-Blogger</h2>
+        <p>Your one-stop solution for all blogging needs.</p>
         <article>
-            <h2>Welcome to V-Blogger</h2>
-            <p>Your one-stop solution for all blogging needs.</p>
+            <h3>Latest Blog Posts</h3>
+                <% posts.forEach(function(post) { %>
+                <hr>
+                <article>
+                    <h4><%- post.title %></h4>
+                    <p><%- post.content.replace(/\n/g, '<br>') %></p>
+                    <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by <%- post.author %></small></p>
+                </article>
+            <% }); %>
+        </article>
+        <article>
+            <h3>Popular Bloggers</h3>
+            <p><i>This feature does not exist yet.</i></p>
         </article>
     </main>
     <%- include('footer') %>
