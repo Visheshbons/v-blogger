@@ -61,4 +61,4 @@ For questions or support, please open an issue on GitHub.
 
 <hr>
 
-<small>Up to date as of `v1.1.0`</small>
+<small>Up to date as of `v1.2.0`</small>
