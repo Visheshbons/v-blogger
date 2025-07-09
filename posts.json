@@ -22,5 +22,11 @@
     "content": "Empty",
     "date": "2025-07-09T21:48:01.420Z",
     "author": 2
+  },
+  {
+    "title": "This is a quick test",
+    "content": "I am testing a new hosting platform.",
+    "date": "2025-07-09T23:14:05.280Z",
+    "author": 4
   }
 ]

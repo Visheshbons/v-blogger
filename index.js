@@ -240,3 +240,29 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
     console.log(`Server is running on port ${chalk.green(port)}`);
 });
+
+import { spawn } from 'child_process';
+
+function runOnShutdown() {
+  // Build the command and arguments
+  const maintenancePath = '../../Please Wait/Fullstack'; // Adjust as needed
+  const child = spawn(
+    'nodemon',
+    ['index.js'],
+    {
+      cwd: maintenancePath,    // Set working directory
+      detached: true,          // Detach from parent
+      stdio: 'ignore',         // Ignore stdio so parent can exit
+      shell: true              // Use shell for Windows compatibility
+    }
+  );
+
+  child.unref(); // Allow the child to keep running after parent exits
+
+  console.warn('Shutting down...');
+  console.log('Maintenance server started.');
+  process.exit(0);
+}
+
+process.on('SIGINT', runOnShutdown);
+process.on('SIGTERM', runOnShutdown);
