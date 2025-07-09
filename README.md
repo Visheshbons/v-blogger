@@ -9,6 +9,7 @@ V-Blogger is a small project I made for fun. It has a basic interface, and suppo
 - Responsive design for all devices
 - Hashed password storage
 - User authentication with front-end pre-hashing
+- Private user messages (DMs)
 
 ## Getting Started
 
@@ -39,6 +40,7 @@ The app will be available at `localhost:3000`.
 
 1. Register for an account or log in.
 2. Create and publish text-only blog posts.
+3. Send DMs to any other user
 
 ## Coming soon...
 
@@ -61,4 +63,4 @@ For questions or support, please open an issue on GitHub.
 
 <hr>
 
-<small>Up to date as of `v1.2.2`</small>
+<small>Up to date as of `v1.3.0`</small>
