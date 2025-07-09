@@ -23,7 +23,13 @@
             <article>
                 <h4><%- post.title %></h4>
                 <p><%- post.content.replace(/\n/g, '<br>') %></p>
-                <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by <%- post.author %></small></p>
+                <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by 
+                <% if (typeof post.getAuthorName === 'function') { %>
+                    <%- post.getAuthorName() %>
+                <% } else { %>
+                    <%- post.author %>
+                <% } %>
+                </small></p>
             </article>
             <% }); %>
         </article>
