@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "users": [
+      1,
+      2
+    ],
+    "messages": [
+      {
+        "chatID": 1,
+        "from": 1,
+        "content": "Hello there",
+        "date": "2025-07-09T09:35:13.671Z"
+      }
+    ]
+  }
+]

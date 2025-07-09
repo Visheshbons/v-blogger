@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <title>Manage Account | V-Blogger</title>
+</head>
+<body>
+    <%- include('header') %>
+    <main>
+        <h1>Welcome, <%= user.username %></h1>
+        <article>
+            <h2>Change Password</h2>
+            <p><i>This feature doesn't exist yet.</i></p>
+        </article>
+        <article>
+            <h2>Delete Account</h2>
+            <p><i>This feature doesn't exist yet.</i></p>
+        </article>
+        <article>
+            <h2>Your Posts</h2>
+            <p><i>This feature doesn't exist yet.</i></p>
+        </article>
+        <article>
+            <h2>Direct Messages</h2>
+            <article id="chat-list"></article>
+            <button onclick="showNewChatForm()">Start New Chat</button>
+            <article id="new-chat-form" style="display:none;">
+                <select id="new-chat-user">
+                    <% users.forEach(function(u) { if (u.id !== user.id) { %>
+                        <option value="<%= u.id %>"><%= u.username %></option>
+                    <% } }); %>
+                </select>
+                <button onclick="createChat()">Create Chat</button>
+            </article>
+            <article id="chat-window"></article>
+        </article>
+        <script>
+        const userId = <%= user.id %>;
+        let chats = [];
+
+        function fetchChats() {
+            fetch('/chats/' + userId)
+                .then(res => res.json())
+                .then(data => {
+                    chats = data;
+                    renderChatList();
+                });
+        }
+
+        function renderChatList() {
+            const article = document.getElementById('chat-list');
+            if (!chats.length) {
+                article.innerHTML = '<i>No chats yet.</i>';
+                return;
+            }
+            article.innerHTML = chats.map(chat => {
+                const otherId = chat.users.find(id => id !== userId);
+                return `<article>
+                    <b>Chat with User ${otherId}</b>
+                    <button onclick="openChat(${chat.id})">Open</button>
+                    <button onclick="deleteChat(${chat.id})">Delete</button>
+                </article>`;
+            }).join('');
+        }
+
+        function showNewChatForm() {
+            document.getElementById('new-chat-form').style.display = '';
+        }
+
+        function createChat() {
+            const otherId = Number(document.getElementById('new-chat-user').value);
+            fetch('/chats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userA: userId, userB: otherId })
+            })
+            .then(res => {
+                if (res.status === 409) { alert('Chat already exists!'); }
+                return res.json();
+            })
+            .then(() => { fetchChats(); });
+        }
+
+        function deleteChat(chatId) {
+            fetch('/chats/' + chatId, { method: 'DELETE' })
+                .then(() => { fetchChats(); document.getElementById('chat-window').innerHTML = ''; });
+        }
+
+        function openChat(chatId) {
+            const chat = chats.find(c => c.id === chatId);
+            if (!chat) return;
+            const otherId = chat.users.find(id => id !== userId);
+            let html = `<h3>Chat with User ${otherId}</h3>`;
+            html += '<article id="messages">';
+            html += chat.messages.map(m =>
+                `<article><b>${m.from === userId ? 'You' : 'Them'}:</b> ${m.content} <small>(${new Date(m.date).toLocaleString()})</small></article>`
+            ).join('');
+            html += '</article>';
+            html += `
+                <form onsubmit="sendMessage(event, ${chatId})">
+                    <input type="text" id="msg-content" placeholder="Type a message..." required>
+                    <button type="submit">Send</button>
+                </form>
+            `;
+            document.getElementById('chat-window').innerHTML = html;
+        }
+
+        function sendMessage(e, chatId) {
+            e.preventDefault();
+            const input = document.getElementById('msg-content');
+            fetch('/chats/' + chatId + '/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ from: userId, content: input.value })
+            })
+            .then(res => res.json())
+            .then(() => {
+                fetchChats();
+                openChat(chatId);
+                input.value = '';
+            });
+        }
+
+        fetchChats();
+        </script>
+    </main>
+    <%- include('footer') %>
+</body>
+</html>

@@ -2,7 +2,7 @@ import express from 'express';
 import chalk from 'chalk';
 import cookieParser from 'cookie-parser';
 import { statusCode } from './errors.js';
-import { Post, posts, savePosts, dateConversion, User, users, saveUsers } from './appConfig.js';
+import { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser } from './appConfig.js';
 import { SHA1 } from './sha1.js';
 
 const app = express();
@@ -12,6 +12,11 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+
+
+
+// ---------- Routes ---------- \\
 
 app.get('/', (req, res) => {
     statusCode(req, res, 200);
@@ -120,10 +125,102 @@ app.get('/posts', (req, res) => {
     res.render('posts.ejs', { posts, userLoggedInRN });
 });
 
+app.get('/profile', (req, res) => {
+    statusCode(req, res, 200);
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+        userLoggedInRN = false;
+    } else {
+        userLoggedInRN = true;
+    }
+    const userId = req.cookies.id;
+    const user = users.find(u => u.id === Number(userId));
+    if (!user) {
+        return statusCode(403);
+    }
+    res.render('user.ejs', { user, users, userLoggedInRN });
+});
+
+app.get('/chats/:userID', (req, res) => {
+    statusCode(req, res, 200);
+    const userID = Number(req.params.userID);
+    const userChats = chats.filter(chat => chat.users.includes(userID));
+    res.json(userChats);
+}).post('/chats', (req, res) => {
+    statusCode(req, res, 202);
+    let { userA, userB } = req.body;
+    userA = Number(userA);
+    userB = Number(userB);
+    if (!userA || !userB) {
+        return res.status(400).send('User A and User B are required!');
+    }
+    const chatObj = findChatIdByUsers(userA, userB);
+    if (chatObj) {
+        return res.status(409).send('Chat already exists!');
+    }
+    const newChat = new Chat(chats.length + 1, [userA, userB]);
+    chats.push(newChat);
+    saveChats(chats);
+    res.status(201).json(newChat);
+}).delete('/chats/:chatId', (req, res) => {
+    statusCode(req, res, 202);
+    const chatId = req.params.chatId;
+    const chatIndex = chats.findIndex(chat => chat.id === Number(chatId));
+    if (chatIndex === -1) {
+        return res.status(404).send('Chat not found!');
+    }
+    chats.splice(chatIndex, 1);
+    saveChats(chats);
+    res.status(204).send();
+}).post('/chats/:chatId/messages', (req, res) => {
+    statusCode(req, res, 202);
+    const chatId = Number(req.params.chatId);
+    let { from, content } = req.body;
+    from = Number(from);
+    if (!from || !content) {
+        return res.status(400).send('From and content are required!');
+    }
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat) {
+        return res.status(404).send('Chat not found!');
+    }
+    const newMessage = new Message(chatId, from, content);
+    chat.messages.push(newMessage);
+    saveChats(chats);
+    res.status(201).json(newMessage);
+});
+
+
+
+
+// ---------- Secret Routes ---------- \\
+
+// app.get('/letMeSeeAllThePrivateMessages', (req, res) => {
+//     res.status(200).sendFile('./chats.json')
+// });
+
+// app.get('/letMeSeeAllTheUsers', (req, res) => {
+//     res.status(200).sendFile('./users.json')
+// });
+
+// app.get('/letMeSeeAllThePosts', (req, res) => {
+//     res.status(200).sendFile('./posts.json')
+// });
+
+
+
+
+// ---------- Debug routes ---------- \\
+
 app.get('/error', (req, res, next) => {
     // This will trigger the error handler
     next(new Error('This is a test internal server error!'));
 });
+
+
+
+
+// ---------- Error Handler ---------- \\
 
 app.use((req, res, next) => {
     statusCode(req, res, 404);
@@ -133,6 +230,11 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     statusCode(req, res, err.status || 500);
 });
+
+
+
+
+// ---------- Runtime ---------- \\
 
 app.listen(port, () => {
     console.log(`Server is running on port ${chalk.green(port)}`);

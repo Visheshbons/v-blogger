@@ -13,7 +13,7 @@
         <% posts.slice().reverse().forEach(function(post) { %>
             <article>
                 <h2><%- post.title %></h2>
-                <p><%- post.content %></p>
+                <p><%- post.content.replace(/\n/g, '<br>') %></p>
                 <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by 
                 <% if (typeof post.getAuthorName === 'function') { %>
                     <%- post.getAuthorName() %>
@@ -23,6 +23,7 @@
                 </small></p>
             </article>
         <% }); %>
+        <p><i><small style="font-size: small;">It seems you've reached the end</small></i></p>
     </main>
     <%- include('footer') %>
 </body>

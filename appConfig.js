@@ -83,6 +83,52 @@ function dateConversion() {
     });
 };
 
+// --- Chat/Message Storage ---
+const chatsFilePath = './chats.json';
+function loadChats() {
+    if (fs.existsSync(chatsFilePath)) {
+        const data = fs.readFileSync(chatsFilePath, 'utf-8');
+        return JSON.parse(data);
+    }
+    return [];
+}
 
+function saveChats(chats) {
+    fs.writeFileSync(chatsFilePath, JSON.stringify(chats, null, 2), 'utf-8');
+}
 
-export { Post, posts, savePosts, dateConversion, User, users, saveUsers };
+let chats = loadChats();
+
+// Helper: Find chat by user pair (order-insensitive)
+function findChatIdByUsers(userA, userB) {
+    return chats.find(chat =>
+        chat.users.length === 2 &&
+        ((chat.users[0] === userA && chat.users[1] === userB) ||
+         (chat.users[0] === userB && chat.users[1] === userA))
+    );
+}
+
+// Helper: Remove chats if a user is deleted
+function removeChatsForUser(userId) {
+    chats = chats.filter(chat => !chat.users.includes(userId));
+    saveChats(chats);
+}
+
+class Chat {
+    constructor(id, users, messages = []) {
+        this.id = id;
+        this.users = users;
+        this.messages = messages;
+    }
+}
+
+class Message {
+    constructor(chatID, from, content, date = new Date().toISOString()) {
+        this.chatID = chatID;
+        this.from = from;
+        this.content = content;
+        this.date = date;
+    }
+}
+
+export { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser };
