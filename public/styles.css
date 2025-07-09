@@ -77,6 +77,11 @@ h2 {
     padding-bottom: 5px;
 }
 
+a {
+    color: #333;
+    text-decoration: underline;
+}
+
 article {
     margin-bottom: 20px;
 }

@@ -109,6 +109,17 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
+app.get('/posts', (req, res) => {
+    statusCode(req, res, 200);
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+        userLoggedInRN = false;
+    } else {
+        userLoggedInRN = true;
+    }
+    res.render('posts.ejs', { posts, userLoggedInRN });
+});
+
 app.get('/error', (req, res, next) => {
     // This will trigger the error handler
     next(new Error('This is a test internal server error!'));

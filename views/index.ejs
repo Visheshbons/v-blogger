@@ -17,8 +17,8 @@
         <% } %>
         <p>Your one-stop solution for all blogging needs.</p>
         <article>
-            <h3>Latest Blog Posts</h3>
-            <% posts.slice().reverse().forEach(function(post) { %>
+            <h3><a href="/posts">Latest Blog Posts</a></h3>
+            <% posts.slice(-3).reverse().forEach(function(post) { %>
             <hr>
             <article>
                 <h4><%- post.title %></h4>
