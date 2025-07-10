@@ -7,12 +7,33 @@ import { SHA1 } from './sha1.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
-const AutoMaintenanceMode = true;
+const AutoMaintenanceMode = false;
+
+
+
+// ---------- Middleware ---------- \\
 
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Forbidden character regex
+const forbiddenChars = /[\/\\{}\[\]<>\"']/;
+
+// Middleware to check for forbidden characters in specified fields
+function checkForbiddenChars(fields) {
+    return (req, res, next) => {
+        for (const field of fields) {
+            if (req.body[field] && forbiddenChars.test(req.body[field])) {
+                return res.status(400).send(
+                    "Input contains illegal characters: / \\ { } [ ] < > \" '"
+                );
+            }
+        }
+        next();
+    };
+}
 
 
 
@@ -45,7 +66,7 @@ app.get('/post', (req, res) => {
         userLoggedInRN = true;
     }
     res.render('post.ejs', { userLoggedInRN });
-}).post('/post', (req, res) => {
+}).post('/post', checkForbiddenChars(['title', 'content']), (req, res) => {
     statusCode(req, res, 202);
     console.log(req.body); // Debugging line
     let { title, content } = req.body;
@@ -70,7 +91,7 @@ app.get('/login', (req, res) => {
         userLoggedInRN = true;
     }
     res.render('login.ejs', { userLoggedInRN, SHA1 });
-}).post('/login', (req, res) => {
+}).post('/login', checkForbiddenChars(['username', 'password_sha1']), (req, res) => {
     statusCode(req, res, 202);
     console.log(req.body); // Debugging line
     const { username, password_sha1 } = req.body;
@@ -91,7 +112,7 @@ app.get('/signup', (req, res) => {
         userLoggedInRN = true;
     }
     res.render('signup.ejs', { userLoggedInRN });
-}).post('/signup', (req, res) => {
+}).post('/signup', checkForbiddenChars(['username', 'password']), (req, res) => {
     statusCode(req, res, 202);
     const { username, password } = req.body;
     if (!username || !password) {
@@ -147,7 +168,7 @@ app.get('/chats/:userID', (req, res) => {
     const userID = Number(req.params.userID);
     const userChats = chats.filter(chat => chat.users.includes(userID));
     res.json(userChats);
-}).post('/chats', (req, res) => {
+}).post('/chats', checkForbiddenChars(['userA', 'userB']), (req, res) => {
     statusCode(req, res, 202);
     let { userA, userB } = req.body;
     userA = Number(userA);
@@ -173,7 +194,7 @@ app.get('/chats/:userID', (req, res) => {
     chats.splice(chatIndex, 1);
     saveChats(chats);
     res.status(204).send();
-}).post('/chats/:chatId/messages', (req, res) => {
+}).post('/chats/:chatId/messages', checkForbiddenChars(['from', 'content']), (req, res) => {
     statusCode(req, res, 202);
     const chatId = Number(req.params.chatId);
     let { from, content } = req.body;
@@ -239,36 +260,36 @@ app.use((err, req, res, next) => {
 // ---------- Runtime ---------- \\
 
 app.listen(port, () => {
-    if (AutoMaintenanceMode) {
-        console.log(chalk.yellow(`[AUTO MAINTENENCE]: The server will activate maintenence mode on shutdown.`));
-    } else {
-        console.log(chalk.red(`[AUTO MAINTENENCE]: The server does not have auto maintenence mode enabled.`));
-    }
     console.log(`Server is running on port ${chalk.green(port)}`);
 });
 
 import { spawn } from 'child_process';
 
 function runOnShutdown() {
-  // Build the command and arguments
-  const maintenancePath = '../../Please Wait/Fullstack'; // Adjust as needed
-  const child = spawn(
-    'nodemon',
-    ['index.js'],
-    {
-      cwd: maintenancePath,    // Set working directory
-      detached: true,          // Detach from parent
-      stdio: 'ignore',         // Ignore stdio so parent can exit
-      shell: true              // Use shell for Windows compatibility
-    }
-  );
 
-  child.unref(); // Allow the child to keep running after parent exits
+    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green('STARTING...')}`));
 
-  console.warn('Shutting down...');
-  console.log('Maintenance server started.');
-  process.exit(0);
+    // Build the command and arguments
+    const maintenancePath = '../../Please Wait/Fullstack'; // Adjust as needed
+    const child = spawn(
+        'nodemon',
+        ['index.js'],
+        {
+            cwd: maintenancePath,    // Set working directory
+            detached: true,          // Detach from parent
+            stdio: 'ignore',         // Ignore stdio so parent can exit
+            shell: true              // Use shell for Windows compatibility
+    });
+
+    child.unref(); // Allow the child to keep running after parent exits
+    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green('RUNNING')}`));
+    process.exit(0);
 }
 
-process.on('SIGINT', runOnShutdown);
-process.on('SIGTERM', runOnShutdown);
+if (AutoMaintenanceMode) {
+    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green('ACTIVE')}`));
+    process.on('SIGINT', runOnShutdown);
+    process.on('SIGTERM', runOnShutdown);
+} else {
+    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.red('INACTIVE')}`));
+}
