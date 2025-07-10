@@ -6,6 +6,12 @@
     <link rel="stylesheet" href="/styles.css">
     <title>All Posts | V-Blogger</title>
 </head>
+
+<!-- CDNJS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
 <body>
     <%- include('header') %>
     <main>
@@ -13,13 +19,13 @@
         <% posts.slice().reverse().forEach(function(post) { %>
             <article>
                 <h2><%- post.title %></h2>
-                <p><%- post.content.replace(/\n/g, '<br>') %></p>
+                <div class="markdown-content"><%- post.htmlContent %></div>
                 <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by 
-                <% if (typeof post.getAuthorName === 'function') { %>
-                    <%- post.getAuthorName() %>
-                <% } else { %>
-                    <%- post.author %>
-                <% } %>
+                    <% if (typeof post.getAuthorName === 'function') { %>
+                        <%- post.getAuthorName() %>
+                    <% } else { %>
+                        <%= users.find(u => u.id === post.author)?.username || post.author %>
+                    <% } %>
                 </small></p>
             </article>
         <% }); %>

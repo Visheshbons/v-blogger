@@ -9,8 +9,8 @@ import sanitizeHtml from 'sanitize-html';
 import hljs from 'highlight.js';
 
 const app = express();
-const port = process.env.PORT || 3000;
-const AutoMaintenanceMode = true;
+const port = process.env.PORT || 3001;
+const AutoMaintenanceMode = false;
 
 
 
@@ -151,6 +151,7 @@ app.get('/login', (req, res) => {
     const user = users.find(u => u.username === username && u.password === password_sha1);
     if (!user) {
         return res.status(401).send('Invalid username or password!');
+        console.log(`${chalk.red(`401`)}: Attempted login with invalid credentials for user: ${username}`);
     }
     console.log(`User logged in: ${username}`);
     res.status(200).cookie('loggedIn', true).cookie('id', user.id).redirect("/");
@@ -197,7 +198,20 @@ app.get('/posts', (req, res) => {
     } else {
         userLoggedInRN = true;
     }
-    res.render('posts.ejs', { posts, userLoggedInRN });
+
+
+    const renderedPosts = posts.map(post => ({
+        ...post,
+        htmlContent: renderMarkdown(post.content)
+    }));
+
+    res.render('posts.ejs', {
+        posts: renderedPosts,
+        users,
+        loggedIn: req.cookies.loggedIn || false,
+        userId: req.cookies.id || null,
+        userLoggedInRN
+    });
 });
 
 app.get('/profile', (req, res) => {
