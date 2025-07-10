@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <title>V-Blogger</title>
 </head>
+
+<!-- CDNJS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
 <body>
     <%- include('header') %>
     <main>
@@ -22,7 +29,7 @@
             <hr>
             <article>
                 <h4><%- post.title %></h4>
-                <p><%- post.content.replace(/\n/g, '<br>') %></p>
+                <div class="markdown-content"><%- post.htmlContent %></div>
                 <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by 
                 <% if (typeof post.getAuthorName === 'function') { %>
                     <%- post.getAuthorName() %>
@@ -46,5 +53,6 @@
         <p><i><small style="font-size: small;">It seems you've reached the end</small></i></p>
     </main>
     <%- include('footer') %>
+
 </body>
 </html>

@@ -27,9 +27,8 @@
 
         document.getElementById('postForm').addEventListener('submit', function(e) {
             const title = document.getElementById('title').value;
-            const content = document.getElementById('content').value;
-            if (forbiddenChars.test(title) || forbiddenChars.test(content)) {
-                alert("Your title or content contains unusable characters: / \\ { } [ ] < > \" '");
+            if (forbiddenChars.test(title)) {
+                alert("Your title contains unusable characters: / \\ { } [ ] < > \" '");
                 e.preventDefault();
                 return false;
             }

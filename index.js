@@ -4,6 +4,9 @@ import cookieParser from 'cookie-parser';
 import { statusCode } from './errors.js';
 import { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser } from './appConfig.js';
 import { SHA1 } from './sha1.js';
+import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
+import hljs from 'highlight.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,10 +21,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Forbidden character regex
+marked.setOptions({
+  highlight: function(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value;
+    } else {
+      return hljs.highlightAuto(code).value;
+    }
+  }
+});
+
+
 const forbiddenChars = /[\/\\{}\[\]<>\"']/;
 
-// Middleware to check for forbidden characters in specified fields
 function checkForbiddenChars(fields) {
     return (req, res, next) => {
         for (const field of fields) {
@@ -55,25 +67,39 @@ function checkForbiddenChars(fields) {
 }
 
 
+function renderMarkdown(mdText) {
+    const html = marked.parse(mdText);
+    return sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+        allowedAttributes: {
+            ...sanitizeHtml.defaults.allowedAttributes,
+            img: ['src', 'alt']
+        }
+    });
+}
+
+
 
 
 // ---------- Routes ---------- \\
 
 app.get('/', (req, res) => {
     statusCode(req, res, 200);
-    let userLoggedInRN;
-    if (!req.cookies.loggedIn) {
-        userLoggedInRN = false;
-    } else {
-        userLoggedInRN = true;
-    }
-    res.render('index.ejs', { 
-        posts,
+    let userLoggedInRN = !!req.cookies.loggedIn;
+
+    // Convert post content from Markdown to sanitized HTML
+    const renderedPosts = posts.map(post => ({
+        ...post,
+        htmlContent: renderMarkdown(post.content)
+    }));
+
+    res.render('index.ejs', {
+        posts: renderedPosts,
         users,
         loggedIn: req.cookies.loggedIn || false,
         userId: req.cookies.id || null,
         userLoggedInRN
-     });
+    });
 });
 
 app.get('/post', (req, res) => {
@@ -85,7 +111,7 @@ app.get('/post', (req, res) => {
         userLoggedInRN = true;
     }
     res.render('post.ejs', { userLoggedInRN });
-}).post('/post', checkForbiddenChars(['title', 'content']), (req, res) => {
+}).post('/post', checkForbiddenChars(['title']), (req, res) => {
     statusCode(req, res, 202);
     console.log(req.body); // Debugging line
     let { title, content } = req.body;
@@ -213,7 +239,7 @@ app.get('/chats/:userID', (req, res) => {
     chats.splice(chatIndex, 1);
     saveChats(chats);
     res.status(204).send();
-}).post('/chats/:chatId/messages', checkForbiddenChars(['from', 'content']), (req, res) => {
+}).post('/chats/:chatId/messages', checkForbiddenChars(['from']), (req, res) => {
     statusCode(req, res, 202);
     const chatId = Number(req.params.chatId);
     let { from, content } = req.body;
