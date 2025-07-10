@@ -26,9 +26,28 @@ function checkForbiddenChars(fields) {
     return (req, res, next) => {
         for (const field of fields) {
             if (req.body[field] && forbiddenChars.test(req.body[field])) {
-                return res.status(400).send(
-                    "Input contains illegal characters: / \\ { } [ ] < > \" '"
-                );
+                return res.status(400).send(`
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Input Error</title>
+                    </head>
+                    <body>
+                        <center><pre>
+                        Input contains illegal characters: / \\ { } [ ] < > " ' <br>
+                        You are an idiot. <br>
+                        Eres un idiota. <br>
+                        Vous êtes un idiot. <br>
+                        你是个白痴。 <br>
+                        君はバカだ。 <br>
+                        Tu es un imbécile. <br>
+                        Du bist ein Idiot. <br>
+                        Você é um idiota. <br>
+                        </pre></center>
+                    </body>
+                    </html>
+                `);
             }
         }
         next();
