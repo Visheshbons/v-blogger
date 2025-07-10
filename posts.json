@@ -28,5 +28,11 @@
     "content": "I am testing a new hosting platform.",
     "date": "2025-07-09T23:14:05.280Z",
     "author": 4
+  },
+  {
+    "title": "I got it to work...",
+    "content": "#### You can now use **markdown** in your own posts!\r\n\r\nUse two asterisks (*) on both sides to get\\\r\n**bold**\r\n\r\nUse an underscore on both sides to get\\\r\n_italc_\r\n\r\nUse the backtick (``) to get\\\r\n`code`\r\n\r\nUse 3 backticks to get\r\n```\r\nalert(\"YOU CAN GET COLOR-FORMATTED CODE BLOCKS\");\r\nif (you don't want to use these) {\r\n    dont_use_them();\r\n};\r\n```",
+    "date": "2025-07-10T04:46:22.065Z",
+    "author": 4
   }
 ]

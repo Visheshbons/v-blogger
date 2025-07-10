@@ -1,5 +1,11 @@
 [
   {
+    "id": 0,
+    "username": "Admin",
+    "password": "6ebfe5e505b06fbd6bef17c2d5ed959c3b1f2346",
+    "comments": "This is the admin account. This has a higher athority than other accounts."
+  },
+  {
     "id": 1,
     "username": "Vishesh Kudva",
     "password": "6ebfe5e505b06fbd6bef17c2d5ed959c3b1f2346"
