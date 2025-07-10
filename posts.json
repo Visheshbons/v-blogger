@@ -34,5 +34,29 @@
     "content": "#### You can now use **markdown** in your own posts!\r\n\r\nUse two asterisks (*) on both sides to get\\\r\n**bold**\r\n\r\nUse an underscore on both sides to get\\\r\n_italc_\r\n\r\nUse the backtick (``) to get\\\r\n`code`\r\n\r\nUse 3 backticks to get\r\n```\r\nalert(\"YOU CAN GET COLOR-FORMATTED CODE BLOCKS\");\r\nif (you don't want to use these) {\r\n    dont_use_them();\r\n};\r\n```",
     "date": "2025-07-10T04:46:22.065Z",
     "author": 4
+  },
+  {
+    "title": "Smoking is bad",
+    "content": "Smoking is bad for you!!!\r\nDo not smoke!!!",
+    "date": "2025-07-10T07:34:57.565Z",
+    "author": 2
+  },
+  {
+    "title": "¡Hola! 👍",
+    "content": "¡Hola mis amigos! ¿Como estas? Yo estoy bien y un poco cansado también. ¡Adiós!",
+    "date": "2025-07-10T07:54:28.177Z",
+    "author": 5
+  },
+  {
+    "title": "What do you think of the DMs?",
+    "content": "What do you guys think of the _all new_ DM functionality? \\\r\nHave you tried it out yet? \\\r\nGo find it in the `profile` tab! \\\r\n_Note: You must have a valid account to use the DM functionality._",
+    "date": "2025-07-10T08:50:03.607Z",
+    "author": 1
+  },
+  {
+    "title": "Hello all",
+    "content": "Hello, this is very cool and I love this blog. This has so much interesting information. Kudos to the developer.",
+    "date": "2025-07-10T09:32:12.865Z",
+    "author": 6
   }
 ]

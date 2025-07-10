@@ -1,11 +1,5 @@
 [
   {
-    "id": 0,
-    "username": "Admin",
-    "password": "6ebfe5e505b06fbd6bef17c2d5ed959c3b1f2346",
-    "comments": "This is the admin account. This has a higher athority than other accounts."
-  },
-  {
     "id": 1,
     "username": "Vishesh Kudva",
     "password": "6ebfe5e505b06fbd6bef17c2d5ed959c3b1f2346"
@@ -24,5 +18,15 @@
     "id": 4,
     "username": "Test User",
     "password": "6ebfe5e505b06fbd6bef17c2d5ed959c3b1f2346"
+  },
+  {
+    "id": 5,
+    "username": "Zach2010",
+    "password": "edc910ab1c4e01f4e30fd0a919f45488b498ff51"
+  },
+  {
+    "id": 6,
+    "username": "Ginzabons",
+    "password": "26923b1b59ea78c89c8a63c5b2a7b6631febc351"
   }
 ]
