@@ -24,6 +24,10 @@ class User {
         this.username = username;
         this.password = password;
     }
+
+    getUserName() {
+        return this.username;
+    }
 }
 
 let users = loadUsers();

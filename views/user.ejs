@@ -7,6 +7,9 @@
     <title>Manage Account | V-Blogger</title>
 </head>
 <body>
+    <script>
+        const users = <%- JSON.stringify(users) %>;
+    </script>
     <%- include('header') %>
     <main>
         <h1>Welcome, <%= user.username %></h1>
@@ -58,7 +61,7 @@
             article.innerHTML = chats.map(chat => {
                 const otherId = chat.users.find(id => id !== userId);
                 return `<article>
-                    <b>Chat with User ${otherId}</b>
+                    <b>Chat with ${users.find(u => u.id === otherId).username}</b>
                     <button onclick="openChat(${chat.id})">Open</button>
                     <button onclick="deleteChat(${chat.id})">Delete</button>
                 </article>`;
@@ -92,7 +95,7 @@
             const chat = chats.find(c => c.id === chatId);
             if (!chat) return;
             const otherId = chat.users.find(id => id !== userId);
-            let html = `<h3>Chat with User ${userId}</h3>`;
+            let html = `<h3>Chat with ${users.find(u => u.id === otherId).username}</h3>`;
             html += '<article id="messages">';
             html += chat.messages.map(m =>
                 `<article class="${m.from === userId ? 'sent' : 'received'}"><b>${m.from === userId ? 'You' : 'Them'}:</b> ${m.content} <br><small>(${new Date(m.date).toLocaleString()})</small></article>`
