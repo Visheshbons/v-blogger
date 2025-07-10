@@ -7,6 +7,7 @@ import { SHA1 } from './sha1.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
+const AutoMaintenanceMode = true;
 
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
@@ -238,6 +239,11 @@ app.use((err, req, res, next) => {
 // ---------- Runtime ---------- \\
 
 app.listen(port, () => {
+    if (AutoMaintenanceMode) {
+        console.log(chalk.yellow(`[AUTO MAINTENENCE]: The server will activate maintenence mode on shutdown.`));
+    } else {
+        console.log(chalk.red(`[AUTO MAINTENENCE]: The server does not have auto maintenence mode enabled.`));
+    }
     console.log(`Server is running on port ${chalk.green(port)}`);
 });
 
