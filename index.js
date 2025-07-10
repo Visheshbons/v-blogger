@@ -6,7 +6,7 @@ import { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, M
 import { SHA1 } from './sha1.js';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const AutoMaintenanceMode = false;
 
 
