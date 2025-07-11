@@ -9,8 +9,8 @@ import sanitizeHtml from 'sanitize-html';
 import hljs from 'highlight.js';
 
 const app = express();
-const port = process.env.PORT || 3001;
-const AutoMaintenanceMode = false;
+const port = process.env.PORT || 3000;
+const AutoMaintenanceMode = true;
 
 
 
@@ -80,7 +80,7 @@ function renderMarkdown(mdText) {
 
 function adminOnly(req, res, next) {
     // Assuming req.cookies.id is a string, convert to number
-    if (Number(req.cookies.id) === 0) {
+    if (Number(req.cookies.id) === 1) {
         return next();
     }
     return res.statusCode(403); // Using custom API
