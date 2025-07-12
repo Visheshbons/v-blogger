@@ -4,8 +4,10 @@
     "content": "Hey there! Vishesh Here. \r\nThis is the first post on the site. \r\nI hope you enjoy using this site!",
     "date": "2025-07-09T12:20:23.000Z",
     "author": 1,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      2
+    ],
     "comments": [],
     "id": 1
   },
@@ -16,7 +18,18 @@
     "author": 1,
     "likes": 0,
     "likedBy": [],
-    "comments": [],
+    "comments": [
+      {
+        "content": " ",
+        "author": 2,
+        "date": "2025-07-12T03:58:38.144Z"
+      },
+      {
+        "content": "                                                                                                                                                                                              ",
+        "author": 2,
+        "date": "2025-07-12T04:02:56.868Z"
+      }
+    ],
     "id": 2
   },
   {
@@ -24,8 +37,10 @@
     "content": "Impersonation is a real thing!\r\nUse strong passwords and save them.\r\nPlease don't use \"password\".\r\nThe security is of no use if you use such passwords.",
     "date": "2025-07-09T07:35:02.192Z",
     "author": 1,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      2
+    ],
     "comments": [],
     "id": 3
   },
@@ -34,8 +49,10 @@
     "content": "Empty",
     "date": "2025-07-09T21:48:01.420Z",
     "author": 2,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      2
+    ],
     "comments": [],
     "id": 4
   },
@@ -44,8 +61,10 @@
     "content": "I am testing a new hosting platform.",
     "date": "2025-07-09T23:14:05.280Z",
     "author": 4,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      2
+    ],
     "comments": [],
     "id": 5
   },
@@ -54,8 +73,10 @@
     "content": "#### You can now use **markdown** in your own posts!\r\n\r\nUse two asterisks (*) on both sides to get\\\r\n**bold**\r\n\r\nUse an underscore on both sides to get\\\r\n_italc_\r\n\r\nUse the backtick (``) to get\\\r\n`code`\r\n\r\nUse 3 backticks to get\r\n```\r\nalert(\"YOU CAN GET COLOR-FORMATTED CODE BLOCKS\");\r\nif (you don't want to use these) {\r\n    dont_use_them();\r\n};\r\n```",
     "date": "2025-07-10T04:46:22.065Z",
     "author": 4,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      2
+    ],
     "comments": [],
     "id": 6
   },
@@ -64,9 +85,10 @@
     "content": "Smoking is bad for you!!!\r\nDo not smoke!!!",
     "date": "2025-07-10T07:34:57.565Z",
     "author": 2,
-    "likes": 1,
+    "likes": 2,
     "likedBy": [
-      1
+      1,
+      2
     ],
     "comments": [],
     "id": 7
@@ -76,9 +98,10 @@
     "content": "¡Hola mis amigos! ¿Como estas? Yo estoy bien y un poco cansado también. ¡Adiós!",
     "date": "2025-07-10T07:54:28.177Z",
     "author": 5,
-    "likes": 1,
+    "likes": 2,
     "likedBy": [
-      1
+      1,
+      2
     ],
     "comments": [],
     "id": 8
@@ -88,8 +111,10 @@
     "content": "What do you guys think of the _all new_ DM functionality? \\\r\nHave you tried it out yet? \\\r\nGo find it in the `profile` tab! \\\r\n_Note: You must have a valid account to use the DM functionality._",
     "date": "2025-07-10T08:50:03.607Z",
     "author": 1,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      2
+    ],
     "comments": [],
     "id": 9
   },
@@ -98,9 +123,10 @@
     "content": "Hello, this is very cool and I love this blog. This has so much interesting information. Kudos to the developer.",
     "date": "2025-07-10T09:32:12.865Z",
     "author": 6,
-    "likes": 1,
+    "likes": 2,
     "likedBy": [
-      1
+      1,
+      2
     ],
     "comments": [
       {
@@ -116,9 +142,31 @@
     "content": "_This post was taken down due to a detected rickroll._",
     "date": "2025-07-10T21:50:26.689Z",
     "author": 7,
-    "likes": 0,
-    "likedBy": [],
-    "comments": [],
+    "likes": 2,
+    "likedBy": [
+      3,
+      2
+    ],
+    "comments": [
+      {
+        "content": "Nice try",
+        "author": 1,
+        "date": "2025-07-12T03:50:23.297Z"
+      }
+    ],
     "id": 11
+  },
+  {
+    "title": "v2.0.0 is out!!!",
+    "content": "This is now V-Blogger version 2.0.0!!!\r\nNow, you can like and comment on posts.\r\nEnjoy!",
+    "date": "2025-07-12T03:49:55.374Z",
+    "author": 1,
+    "likes": 2,
+    "likedBy": [
+      3,
+      2
+    ],
+    "comments": [],
+    "id": 12
   }
 ]

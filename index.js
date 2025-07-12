@@ -231,13 +231,13 @@ app.get('/posts', (req, res) => {
         if (likedIndex !== -1) {
             post.likedBy.splice(likedIndex, 1);
             post.likes = Math.max(0, (post.likes || 0) - 1);
-            console.log(`User ${userId} unliked post ${post.id}`);
+            console.log(`User ${chalk.greenBright(userId)} unliked post ${chalk.greenBright(post.id)}`);
             savePosts(posts);
             return res.json({ likes: post.likes, liked: false });
         } else {
             post.likes = (post.likes || 0) + 1;
             post.likedBy.push(Number(userId));
-            console.log(`User ${userId} liked post ${post.id}`);
+            console.log(`User ${chalk.greenBright(userId)} liked post ${chalk.greenBright(post.id)}`);
             savePosts(posts);
             res.json({ likes: post.likes, liked: true });
         }
@@ -258,6 +258,7 @@ app.get('/posts', (req, res) => {
     });
     savePosts(posts);
     res.json(post.comments);
+    console.log(`New comment added to post ${chalk.greenBright(post.id)} by user ${chalk.greenBright(author)}: ${chalk.grey(content)}`);
 });
 
 
