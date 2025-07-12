@@ -1,9 +1,12 @@
-// Imports all the neccecary data
+// ---------- Importing Required Modules ---------- \\
 import express from 'express';
 import chalk from 'chalk';
 import fs from 'fs';
 
 
+
+
+// ---------- Users ------------ \\
 
 const userFilePath = './users.json';
 function loadUsers() {
@@ -37,7 +40,7 @@ let users = loadUsers();
 
 
 
-
+// -------------- Posts ------------ \\
 
 const postsFilePath = './posts.json';
 
@@ -55,14 +58,16 @@ function savePosts(posts) {
     fs.writeFileSync(postsFilePath, JSON.stringify(posts, null, 2), 'utf-8');
 }
 
-
 class Post {
-    constructor(title, content, author, date = new Date().toISOString()) {
+    constructor(title, content, author, date = new Date().toISOString(), id = null, likes = 0, likedBy = [], comments = []) {
         this.title = title;
         this.content = content;
         this.date = date;
-        // Always store the user ID (or null/undefined for anonymous)
         this.author = author;
+        this.likes = likes;
+        this.likedBy = likedBy; // Array of user IDs who have liked this post
+        this.comments = comments;
+        this.id = id;
     }
 
     // Helper to get the username for display
@@ -70,10 +75,23 @@ class Post {
         const user = users.find(user => user.id === this.author);
         return user ? user.username : (typeof this.author === 'string' ? this.author : 'Anonymous');
     }
+
+    getComments() {
+        return this.comments.map(comment => ({
+            content: comment.content,
+            author: comment.getAuthorName(),
+            date: comment.date
+        }));
+    }
 }
 
 let posts = loadPosts().map(
-  post => new Post(post.title, post.content, post.author, post.date)
+  post => new Post(
+    post.title, post.content, post.author, post.date, post.id,
+    post.likes || 0,
+    post.likedBy || [],
+    post.comments || []
+  )
 );
 
 function dateConversion() {
@@ -87,7 +105,31 @@ function dateConversion() {
     });
 };
 
-// --- Chat/Message Storage ---
+// Helper function
+function getNextPostId(posts) {
+    return posts.length ? Math.max(...posts.map(p => p.id || 0)) + 1 : 1;
+}
+
+class Comment {
+    constructor(content, author, date = new Date().toISOString()) {
+        this.content = content;
+        this.author = author;
+        this.date = date;
+    }
+
+    // Helper to get the username for display
+    getAuthorName() {
+        const user = users.find(user => user.id === this.author);
+        return user ? user.username : (typeof this.author === 'string' ? this.author : 'Anonymous');
+    }
+}
+
+
+
+
+
+// ------------- Chats ------------ \\
+
 const chatsFilePath = './chats.json';
 function loadChats() {
     if (fs.existsSync(chatsFilePath)) {
@@ -135,4 +177,10 @@ class Message {
     }
 }
 
-export { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser };
+
+
+
+
+// ---------- Export ---------- \\
+
+export { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser, getNextPostId };

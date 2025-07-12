@@ -37,6 +37,42 @@
                         <%= users.find(u => u.id === post.author)?.username || post.author %>
                     <% } %>
                 </small></p>
+
+                <% 
+                    const userIdNum = Number(userId);
+                    const alreadyLiked = post.likedBy && post.likedBy.includes(userIdNum); 
+                %>
+                <form class="like-form" data-post-id="<%= post.id %>">
+                    <button type="submit" class="like-btn" data-liked="<%= alreadyLiked %>">
+                        <span class="like-text"><%= alreadyLiked ? "Unlike" : "Like" %></span>
+                        (<span class="like-count"><%= post.likes || 0 %></span>)
+                    </button>
+                </form>
+
+                <!-- Comments -->
+                <details>
+                <summary>Comments (<%= post.comments ? post.comments.length : 0 %>)</summary>
+                <div class="comments-list">
+                    <% (post.comments || []).forEach(function(comment) { %>
+                    <div class="comment">
+                        <strong>
+                        <%= users.find(u => u.id === comment.author)?.username || 'Anonymous' %>
+                        </strong>:
+                        <%= comment.content %>
+                        <small>(<%= new Date(comment.date).toLocaleString() %>)</small>
+                    </div>
+                    <% }); %>
+                </div>
+                <% if (loggedIn && userId) { %>
+                <form class="comment-form" data-post-id="<%= post.id %>">
+                    <input type="hidden" name="author" value="<%= userId %>">
+                    <input type="text" name="content" placeholder="Add a comment..." required>
+                    <button type="submit">Comment</button>
+                </form>
+                <% } else { %>
+                    <p><small><a href="/login">Log in</a> to comment.</small></p>
+                <% } %>
+                </details>
             </article>
             <% }); %>
         </article>
@@ -53,6 +89,58 @@
         <p><i><small style="font-size: small;">It seems you've reached the end</small></i></p>
     </main>
     <%- include('footer') %>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-post-date]').forEach(el => {
+                const iso = el.getAttribute('data-post-date');
+                if (iso) el.textContent = new Date(iso).toLocaleString();
+            });
+        });
+
+        document.querySelectorAll('.like-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const postId = form.getAttribute('data-post-id');
+                const btn = form.querySelector('.like-btn');
+                fetch(`/posts/${postId}/like`, { method: 'POST' })
+                    .then(res => {
+                        if (!res.ok) {
+                            return res.text().then(txt => { throw new Error(txt); });
+                        }
+                        return res.json();
+                    }).then(data => {
+                        form.querySelector('.like-count').textContent = data.likes;
+                        btn.setAttribute('data-liked', data.liked);
+                        form.querySelector('.like-text').textContent = data.liked ? "Unlike" : "Like";
+                        // Optionally: visually indicate liked/unliked
+                    }).catch(err => {
+                        alert("Error: " + err.message);
+                    });
+            });
+        });
+
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const postId = form.getAttribute('data-post-id');
+                const content = form.querySelector('input[name="content"]').value;
+                const author = form.querySelector('input[name="author"]').value;
+                fetch(`/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content, author })
+                    })
+                    .then(res => res.json())
+                    .then(comments => {
+                    // Optionally, re-render the comments list or reload the page
+                    location.reload();
+                });
+            });
+        });
+
+    </script>
 
 </body>
 </html>

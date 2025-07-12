@@ -2,7 +2,7 @@ import express from 'express';
 import chalk from 'chalk';
 import cookieParser from 'cookie-parser';
 import { statusCode } from './errors.js';
-import { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser } from './appConfig.js';
+import { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser, getNextPostId } from './appConfig.js';
 import { SHA1 } from './sha1.js';
 import { marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
@@ -83,7 +83,7 @@ function adminOnly(req, res, next) {
     if (Number(req.cookies.id) === 1) {
         return next();
     }
-    return res.statusCode(403); // Using custom API
+    return statusCode(req, res, 403); // Using custom API
 }
 
 
@@ -120,20 +120,26 @@ app.get('/post', (req, res) => {
     }
     res.render('post.ejs', { userLoggedInRN });
 }).post('/post', checkForbiddenChars(['title']), (req, res) => {
-    statusCode(req, res, 202);
-    console.log(req.body); // Debugging line
-    let { title, content } = req.body;
-    if (!title || !content) {
-        return res.status(400).send('Title and content are required!');
+    try {
+        statusCode(req, res, 202);
+        console.log(req.body); // Debugging line
+        let { title, content } = req.body;
+        if (!title || !content) {
+            return res.status(400).send('Title and content are required!');
+        }
+        const userId = req.cookies.id;
+        const newId = getNextPostId(posts);
+        const newPost = new Post(title, content, userId ? Number(userId) : null, undefined, newId);
+        posts.push(newPost);
+        savePosts(posts);
+        console.log(`New post added: ${title}`);
+        res.status(201).redirect("/");
+    } catch (error) {
+        console.error('Error creating post:', chalk.red(error));
+        return statusCode(req, res, 500)
     }
-    const userId = req.cookies.id;
-    const user = users.find(u => u.id === userId);
-    const newPost = new Post(title, content, userId ? Number(userId) : null);
-    posts.push(newPost);
-    savePosts(posts);
-    console.log(`New post added: ${title}`);
-    res.status(201).redirect("/");
 });
+
 
 app.get('/login', (req, res) => {
     statusCode(req, res, 200);
@@ -212,7 +218,48 @@ app.get('/posts', (req, res) => {
         userId: req.cookies.id || null,
         userLoggedInRN
     });
+}).post('/posts/:id/like', (req, res) => {
+    try {
+        const post = posts.find(p => p.id == req.params.id);
+        if (!post) return statusCode(req, res, 404);
+
+        const userId = Number(req.cookies.id);
+        if (!userId) return statusCode(req, res, 401);
+
+        post.likedBy = post.likedBy || [];
+        const likedIndex = post.likedBy.indexOf(userId);
+        if (likedIndex !== -1) {
+            post.likedBy.splice(likedIndex, 1);
+            post.likes = Math.max(0, (post.likes || 0) - 1);
+            console.log(`User ${userId} unliked post ${post.id}`);
+            savePosts(posts);
+            return res.json({ likes: post.likes, liked: false });
+        } else {
+            post.likes = (post.likes || 0) + 1;
+            post.likedBy.push(Number(userId));
+            console.log(`User ${userId} liked post ${post.id}`);
+            savePosts(posts);
+            res.json({ likes: post.likes, liked: true });
+        }
+    } catch (err) {
+        console.error('Like route error:', chalk.red(err));
+        return statusCode(req, res, 500);
+    }
+}).post('/posts/:id/comments', (req, res) => {
+    const post = posts.find(p => p.id == req.params.id);
+    if (!post) return statusCode(req, res, 404);
+    const { content, author } = req.body;
+    if (!content || !author) return statusCode(req, res, 400);
+    post.comments = post.comments || [];
+    post.comments.push({
+        content,
+        author: Number(author),
+        date: new Date().toISOString()
+    });
+    savePosts(posts);
+    res.json(post.comments);
 });
+
 
 app.get('/profile', (req, res) => {
     statusCode(req, res, 200);
@@ -225,7 +272,7 @@ app.get('/profile', (req, res) => {
     const userId = req.cookies.id;
     const user = users.find(u => u.id === Number(userId));
     if (!user) {
-        return statusCode(403);
+        return statusCode(req, res, 403);
     }
     res.render('user.ejs', { user, users, userLoggedInRN });
 });
@@ -339,7 +386,7 @@ function runOnShutdown() {
     // Build the command and arguments
     const maintenancePath = '../../Please Wait/Fullstack'; // Adjust as needed
     const child = spawn(
-        'nodemon',
+        'node',
         ['index.js'],
         {
             cwd: maintenancePath,    // Set working directory
