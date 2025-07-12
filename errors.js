@@ -66,6 +66,18 @@ function statusCode(req, res, code, forced = false) {
             res.status(206);
             console.log(`${chalk.green('206')}: the page ${req.path} returned partial content.`);
             break;
+        case 207:
+            res.status(207);
+            console.log(`${chalk.green('207')}: the page ${req.path} returned multi-status.`);
+            break;
+        case 208:
+            res.status(208);
+            console.log(`${chalk.green('208')}: the page ${req.path} returned already reported.`);
+            break;
+        case 226:
+            res.status(226);
+            console.log(`${chalk.green('226')}: the page ${req.path} returned IM Used.`);
+            break;
         // 3xx Redirection
         case 300:
             res.status(300);
@@ -133,6 +145,10 @@ function statusCode(req, res, code, forced = false) {
             res.status(406).send('<center><pre>ERR_406_NOT_ACCEPTABLE</pre></center>');
             console.warn(`${chalk.red('ERR_406')}: the page ${req.path} is not acceptable.`);
             break;
+        case 407:
+            res.status(407).send('<center><pre>ERR_407_PROXY_AUTHENTICATION_REQUIRED</pre></center>');
+            console.warn(`${chalk.red('ERR_407')}: the page ${req.path} requires proxy authentication.`);
+            break;
         case 408:
             res.status(408).send('<center><pre>ERR_408_REQUEST_TIMEOUT</pre></center>');
             console.warn(`${chalk.red('ERR_408')}: the page ${req.path} request timed out.`);
@@ -145,13 +161,73 @@ function statusCode(req, res, code, forced = false) {
             res.status(410).send('<center><pre>ERR_410_GONE</pre></center>');
             console.warn(`${chalk.red('ERR_410')}: the page ${req.path} is gone.`);
             break;
+        case 411:
+            res.status(411).send('<center><pre>ERR_411_LENGTH_REQUIRED</pre></center>');
+            console.warn(`${chalk.red('ERR_411')}: the page ${req.path} requires a length.`);
+            break;
+        case 412:
+            res.status(412).send('<center><pre>ERR_412_PRECONDITION_FAILED</pre></center>');
+            console.warn(`${chalk.red('ERR_412')}: the page ${req.path} precondition failed.`);
+            break;
+        case 413:
+            res.status(413).send('<center><pre>ERR_413_PAYLOAD_TOO_LARGE</pre></center>');
+            console.warn(`${chalk.red('ERR_413')}: the page ${req.path} payload is too large.`);
+            break;
+        case 414:
+            res.status(414).send('<center><pre>ERR_414_URI_TOO_LONG</pre></center>');
+            console.warn(`${chalk.red('ERR_414')}: the page ${req.path} URI is too long.`);
+            break;
+        case 415:
+            res.status(415).send('<center><pre>ERR_415_UNSUPPORTED_MEDIA_TYPE</pre></center>');
+            console.warn(`${chalk.red('ERR_415')}: the page ${req.path} has an unsupported media type.`);
+            break;
+        case 416:
+            res.status(416).send('<center><pre>ERR_416_RANGE_NOT_SATISFIABLE</pre></center>');
+            console.warn(`${chalk.red('ERR_416')}: the page ${req.path} range is not satisfiable.`);
+            break;
+        case 417:
+            res.status(417).send('<center><pre>ERR_417_EXPECTATION_FAILED</pre></center>');
+            console.warn(`${chalk.red('ERR_417')}: the page ${req.path} expectation failed.`);
+            break;
         case 418:
             res.status(418).send('<center><pre>ERR_418_IM_A_TEAPOT</pre></center>');
             console.warn(`${chalk.red('ERR_418')}: the page ${req.path} is a teapot.`);
             break;
+        case 421:
+            res.status(421).send('<center><pre>ERR_421_MISDIRECTED_REQUEST</pre></center>');
+            console.warn(`${chalk.red('ERR_421')}: the page ${req.path} is misdirected.`);
+            break;
+        case 422:
+            res.status(422).send('<center><pre>ERR_422_UNPROCESSABLE_ENTITY</pre></center>');
+            console.warn(`${chalk.red('ERR_422')}: the page ${req.path} is unprocessable.`);
+            break;
+        case 423:
+            res.status(423).send('<center><pre>ERR_423_LOCKED</pre></center>');
+            console.warn(`${chalk.red('ERR_423')}: the page ${req.path} is locked.`);
+            break;
+        case 424:
+            res.status(424).send('<center><pre>ERR_424_FAILED_DEPENDENCY</pre></center>');
+            console.warn(`${chalk.red('ERR_424')}: the page ${req.path} has a failed dependency.`);
+            break;
+        case 425:
+            res.status(425).send('<center><pre>ERR_425_TOO_EARLY</pre></center>');
+            console.warn(`${chalk.red('ERR_425')}: the page ${req.path} is too early.`);
+            break;
+        case 426:
+            res.status(426).send('<center><pre>ERR_426_UPGRADE_REQUIRED</pre></center>');
+            console.warn(`${chalk.red('ERR_426')}: the page ${req.path} requires an upgrade.`);
+            break;
+        case 428:
+            res.status(428).send('<center><pre>ERR_428_PRECONDITION_REQUIRED</pre></center>');
+            console.warn(`${chalk.red('ERR_428')}: the page ${req.path} precondition is required.`);
+            break;
         case 429:
             res.status(429).send('<center><pre>ERR_429_TOO_MANY_REQUESTS</pre></center>');
             console.warn(`${chalk.red('ERR_429')}: too many requests for ${req.path}.`);
+            break;
+        case 431:
+            res.status(431).send('<center><pre>ERR_431_REQUEST_HEADER_FIELDS_TOO_LARGE</pre></center>');
+            console.warn(`${chalk.red('ERR_431')}: the request header fields for ${req.path} are too large.`);
             break;
         case 451:
             res.status(451).send('<center><pre>ERR_451_UNAVAILABLE_FOR_LEGAL_REASONS</pre></center>');
@@ -191,6 +267,30 @@ function statusCode(req, res, code, forced = false) {
         case 504:
             res.status(504).send('<center><pre>ERR_504_GATEWAY_TIMEOUT</pre></center>');
             console.error(`${chalk.magenta('ERR_504')}: gateway timeout at ${req.path}.`);
+            break;
+        case 505:
+            res.status(505).send('<center><pre>ERR_505_HTTP_VERSION_NOT_SUPPORTED</pre></center>');
+            console.error(`${chalk.magenta('ERR_505')}: HTTP version not supported at ${req.path}.`);
+            break;
+        case 506:
+            res.status(506).send('<center><pre>ERR_506_VARIANT_ALSO_NEGOTIATES</pre></center>');
+            console.error(`${chalk.magenta('ERR_506')}: variant also negotiates at ${req.path}.`);
+            break;
+        case 507:
+            res.status(507).send('<center><pre>ERR_507_INSUFFICIENT_STORAGE</pre></center>');
+            console.error(`${chalk.magenta('ERR_507')}: insufficient storage at ${req.path}.`);
+            break;
+        case 508:
+            res.status(508).send('<center><pre>ERR_508_LOOP_DETECTED</pre></center>');
+            console.error(`${chalk.magenta('ERR_508')}: loop detected at ${req.path}.`);
+            break;
+        case 510:
+            res.status(510).send('<center><pre>ERR_510_NOT_EXTENDED</pre></center>');
+            console.error(`${chalk.magenta('ERR_510')}: not extended at ${req.path}.`);
+            break;
+        case 511:
+            res.status(511).send('<center><pre>ERR_511_NETWORK_AUTHENTICATION_REQUIRED</pre></center>');
+            console.error(`${chalk.magenta('ERR_511')}: network authentication required at ${req.path}.`);
             break;
         default:
             if (code >= 400 && code < 600) {
