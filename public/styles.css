@@ -230,3 +230,128 @@ form input[type="submit"]:hover {
         display: flex;
     }
 }
+
+
+/* --- Likes & Comments Styling --- */
+
+/* Like button styles */
+.like-form {
+    display: inline-block;
+    margin: 8px 0;
+}
+
+.like-btn {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #bbb;
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.like-btn[data-liked="true"] {
+    background: rgb(151, 224, 163);
+    color: rgb(5, 122, 25);
+    border: 1.5px solid rgb(5, 122, 25);
+    font-weight: bold;
+}
+
+.like-btn:hover {
+    background: rgb(151, 224, 163);
+    color: rgb(5, 122, 25);
+    border-color: rgb(5, 122, 25);
+}
+
+/* Like count */
+.like-count {
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+/* Comments section */
+details {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.comments-list {
+    margin: 10px 0 0 0;
+    padding: 0 0 0 10px;
+}
+
+.comment {
+    background: #f9f9f9;
+    border-left: 3px solid #bbb;
+    margin: 6px 0;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 0.98em;
+    word-break: break-word;
+}
+
+.comment strong {
+    color: #333;
+    font-weight: bold;
+}
+
+.comment small {
+    color: #888;
+    margin-left: 8px;
+    font-size: 0.93em;
+}
+
+/* Comment form */
+.comment-form {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+}
+
+.comment-form input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+    padding: 7px 10px;
+}
+
+.comment-form button[type="submit"] {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 7px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.comment-form button[type="submit"]:hover {
+    background: #555;
+}
+
+/* Details summary arrow styling */
+details summary {
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+/* Responsive tweaks for comments and likes */
+@media (max-width: 600px) {
+    article {
+        padding: 10px;
+        max-width: 98vw;
+    }
+    .comment-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

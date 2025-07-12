@@ -94,8 +94,10 @@
     "content": "Hello, this is very cool and I love this blog. This has so much interesting information. Kudos to the developer.",
     "date": "2025-07-10T09:32:12.865Z",
     "author": 6,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      4
+    ],
     "comments": [],
     "id": 10
   },
@@ -108,64 +110,5 @@
     "likedBy": [],
     "comments": [],
     "id": 11
-  },
-  {
-    "title": "Hello",
-    "content": "Moo",
-    "date": "2025-07-12T01:13:28.433Z",
-    "author": null,
-    "likes": 0,
-    "likedBy": [],
-    "comments": [
-      {
-        "content": "Wassup bro",
-        "author": 4,
-        "date": "2025-07-12T03:29:08.120Z"
-      }
-    ],
-    "id": 12
-  },
-  {
-    "title": "This better work...",
-    "content": "I am begging you, node.js, to just WORK\r\nOr else...",
-    "date": "2025-07-12T02:36:11.130Z",
-    "author": 4,
-    "likes": 1,
-    "likedBy": [
-      1
-    ],
-    "comments": [
-      {
-        "content": "Hello",
-        "author": 4,
-        "date": "2025-07-12T02:44:26.928Z"
-      },
-      {
-        "content": "How are you",
-        "author": 4,
-        "date": "2025-07-12T02:44:35.794Z"
-      },
-      {
-        "content": "Wassup bro",
-        "author": 4,
-        "date": "2025-07-12T03:23:31.005Z"
-      },
-      {
-        "content": "Yo bro",
-        "author": 4,
-        "date": "2025-07-12T03:25:40.684Z"
-      },
-      {
-        "content": "Wassup bro",
-        "author": 1,
-        "date": "2025-07-12T03:26:38.771Z"
-      },
-      {
-        "content": "Yo bro",
-        "author": 4,
-        "date": "2025-07-12T03:29:04.091Z"
-      }
-    ],
-    "id": 13
   }
 ]
