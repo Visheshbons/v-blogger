@@ -116,7 +116,11 @@
                         form.querySelector('.like-text').textContent = data.liked ? "Unlike" : "Like";
                         // Optionally: visually indicate liked/unliked
                     }).catch(err => {
-                        alert("Error: " + err.message);
+                        if (err.message.includes("UNAUTHORIZED")) {
+                            alert("You must be logged in to like posts.");
+                        } else {
+                            alert("Error: " + err.message);
+                        }
                     });
             });
         });
