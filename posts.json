@@ -64,8 +64,10 @@
     "content": "Smoking is bad for you!!!\r\nDo not smoke!!!",
     "date": "2025-07-10T07:34:57.565Z",
     "author": 2,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      1
+    ],
     "comments": [],
     "id": 7
   },
@@ -74,8 +76,10 @@
     "content": "¡Hola mis amigos! ¿Como estas? Yo estoy bien y un poco cansado también. ¡Adiós!",
     "date": "2025-07-10T07:54:28.177Z",
     "author": 5,
-    "likes": 0,
-    "likedBy": [],
+    "likes": 1,
+    "likedBy": [
+      1
+    ],
     "comments": [],
     "id": 8
   },
@@ -96,9 +100,15 @@
     "author": 6,
     "likes": 1,
     "likedBy": [
-      4
+      1
     ],
-    "comments": [],
+    "comments": [
+      {
+        "content": "Thank you!!",
+        "author": 1,
+        "date": "2025-07-12T03:40:33.669Z"
+      }
+    ],
     "id": 10
   },
   {

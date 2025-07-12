@@ -11,6 +11,7 @@ V-Blogger is a small project I made for fun. It has a basic interface, and suppo
 - User authentication with front-end pre-hashing
 - Private user messages (DMs)
 - Markdown support for posts
+- Likes and Comments for posts
 
 ## Getting Started
 
@@ -43,13 +44,13 @@ The app will be available at `localhost:3000`.
 2. Create and publish text-only blog posts.
 3. Send DMs to any other user
 4. Markdown syntax is supported for posts
+5. Likes and Comments for posts
 
 ## Coming soon...
 
 1. Account modification
-2. Likes and comments for posts
-3. Account deletion
-4. Post editing and deletion
+2. Account deletion
+3. Post editing and deletion
 
 ## Contributing
 
@@ -65,4 +66,4 @@ For questions or support, please open an issue on GitHub.
 
 <hr>
 
-<small>Up to date as of `v1.4.0`</small>
+<small>Up to date as of `v2.0.0`</small>
