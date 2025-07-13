@@ -21,19 +21,6 @@
             </div>
             <button type="submit">Publish</button>
         </form>
-        <script>
-        // Forbidden characters regex
-        const forbiddenChars = /[\/\\{}\[\]<>\"']/;
-
-        document.getElementById('postForm').addEventListener('submit', function(e) {
-            const title = document.getElementById('title').value;
-            if (forbiddenChars.test(title)) {
-                alert("Your title contains unusable characters: / \\ { } [ ] < > \" '");
-                e.preventDefault();
-                return false;
-            }
-        });
-        </script>
     </main>
     <%- include('footer') %>
 </body>

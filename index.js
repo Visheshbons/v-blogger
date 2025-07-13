@@ -132,7 +132,6 @@ app.get('/post', (req, res) => {
     res.render('post.ejs', { userLoggedInRN });
 }).post(
     '/post',
-    checkForbiddenChars(['title']),
     limitPostLength(['content'], 5000),
     limitPostLength(['title'], 500),
     (req, res) => {
