@@ -86,6 +86,17 @@ function adminOnly(req, res, next) {
     return statusCode(req, res, 403); // Using custom API
 }
 
+function limitPostLength(fields, maxLength = 5000) {
+    return (req, res, next) => {
+        for (const field of fields) {
+            if (req.body[field] && req.body[field].length > maxLength) {
+                return statusCode(req, res, 413);
+            };
+        };
+        next();
+    };
+}
+
 
 
 
@@ -119,26 +130,32 @@ app.get('/post', (req, res) => {
         userLoggedInRN = true;
     }
     res.render('post.ejs', { userLoggedInRN });
-}).post('/post', checkForbiddenChars(['title']), (req, res) => {
-    try {
-        statusCode(req, res, 202);
-        console.log(req.body); // Debugging line
-        let { title, content } = req.body;
-        if (!title || !content) {
-            return res.status(400).send('Title and content are required!');
+}).post(
+    '/post',
+    checkForbiddenChars(['title']),
+    limitPostLength(['content'], 5000),
+    limitPostLength(['title'], 500),
+    (req, res) => {
+        try {
+            statusCode(req, res, 202);
+            console.log(req.body); // Debugging line
+            let { title, content } = req.body;
+            if (!title || !content) {
+                return res.status(400).send('Title and content are required!');
+            }
+            const userId = req.cookies.id;
+            const newId = getNextPostId(posts);
+            const newPost = new Post(title, content, userId ? Number(userId) : null, undefined, newId);
+            posts.push(newPost);
+            savePosts(posts);
+            console.log(`New post added: ${title}`);
+            res.status(201).redirect("/");
+        } catch (error) {
+            console.error('Error creating post:', chalk.red(error));
+            return statusCode(req, res, 500)
         }
-        const userId = req.cookies.id;
-        const newId = getNextPostId(posts);
-        const newPost = new Post(title, content, userId ? Number(userId) : null, undefined, newId);
-        posts.push(newPost);
-        savePosts(posts);
-        console.log(`New post added: ${title}`);
-        res.status(201).redirect("/");
-    } catch (error) {
-        console.error('Error creating post:', chalk.red(error));
-        return statusCode(req, res, 500)
     }
-});
+);
 
 
 app.get('/login', (req, res) => {
@@ -150,18 +167,22 @@ app.get('/login', (req, res) => {
         userLoggedInRN = true;
     }
     res.render('login.ejs', { userLoggedInRN, SHA1 });
-}).post('/login', checkForbiddenChars(['username', 'password_sha1']), (req, res) => {
-    statusCode(req, res, 202);
-    console.log(req.body); // Debugging line
-    const { username, password_sha1 } = req.body;
-    const user = users.find(u => u.username === username && u.password === password_sha1);
-    if (!user) {
-        return res.status(401).send('Invalid username or password!');
-        console.log(`${chalk.red(`401`)}: Attempted login with invalid credentials for user: ${username}`);
+}).post(
+    '/login',
+    checkForbiddenChars(['username', 'password_sha1']),
+    (req, res) => {
+        statusCode(req, res, 202);
+        console.log(req.body); // Debugging line
+        const { username, password_sha1 } = req.body;
+        const user = users.find(u => u.username === username && u.password === password_sha1);
+        if (!user) {
+            return res.status(401).send('Invalid username or password!');
+            console.log(`${chalk.red(`401`)}: Attempted login with invalid credentials for user: ${username}`);
+        }
+        console.log(`User logged in: ${username}`);
+        res.status(200).cookie('loggedIn', true).cookie('id', user.id).redirect("/");
     }
-    console.log(`User logged in: ${username}`);
-    res.status(200).cookie('loggedIn', true).cookie('id', user.id).redirect("/");
-});
+);
 
 app.get('/signup', (req, res) => {
     statusCode(req, res, 200);
@@ -283,23 +304,27 @@ app.get('/chats/:userID', (req, res) => {
     const userID = Number(req.params.userID);
     const userChats = chats.filter(chat => chat.users.includes(userID));
     res.json(userChats);
-}).post('/chats', checkForbiddenChars(['userA', 'userB']), (req, res) => {
-    statusCode(req, res, 202);
-    let { userA, userB } = req.body;
-    userA = Number(userA);
-    userB = Number(userB);
-    if (!userA || !userB) {
-        return res.status(400).send('User A and User B are required!');
+}).post(
+    '/chats',
+    checkForbiddenChars(['userA', 'userB']),
+    (req, res) => {
+        statusCode(req, res, 202);
+        let { userA, userB } = req.body;
+        userA = Number(userA);
+        userB = Number(userB);
+        if (!userA || !userB) {
+            return res.status(400).send('User A and User B are required!');
+        }
+        const chatObj = findChatIdByUsers(userA, userB);
+        if (chatObj) {
+            return res.status(409).send('Chat already exists!');
+        }
+        const newChat = new Chat(chats.length + 1, [userA, userB]);
+        chats.push(newChat);
+        saveChats(chats);
+        res.status(201).json(newChat);
     }
-    const chatObj = findChatIdByUsers(userA, userB);
-    if (chatObj) {
-        return res.status(409).send('Chat already exists!');
-    }
-    const newChat = new Chat(chats.length + 1, [userA, userB]);
-    chats.push(newChat);
-    saveChats(chats);
-    res.status(201).json(newChat);
-}).delete('/chats/:chatId', (req, res) => {
+).delete('/chats/:chatId', (req, res) => {
     statusCode(req, res, 202);
     const chatId = req.params.chatId;
     const chatIndex = chats.findIndex(chat => chat.id === Number(chatId));
@@ -309,24 +334,29 @@ app.get('/chats/:userID', (req, res) => {
     chats.splice(chatIndex, 1);
     saveChats(chats);
     res.status(204).send();
-}).post('/chats/:chatId/messages', checkForbiddenChars(['from']), (req, res) => {
-    statusCode(req, res, 202);
-    const chatId = Number(req.params.chatId);
-    let { from, content } = req.body;
-    from = Number(from);
-    if (!from || !content) {
-        return res.status(400).send('From and content are required!');
+}).post(
+    '/chats/:chatId/messages',
+    checkForbiddenChars(['from', 'content']),
+    limitPostLength(['content'], 500),
+    (req, res) => {
+        statusCode(req, res, 202);
+        const chatId = Number(req.params.chatId);
+        let { from, content } = req.body;
+        from = Number(from);
+        if (!from || !content) {
+            return res.status(400).send('From and content are required!');
+        }
+        const chat = chats.find(c => c.id === chatId);
+        if (!chat) {
+            return res.status(404).send('Chat not found!');
+        }
+        const newMessage = new Message(chatId, from, content);
+        console.log(`New message from user ${chalk.greenBright(from)} in chat ${chalk.greenBright(chatId)}: ${chalk.grey(content)}`);
+        chat.messages.push(newMessage);
+        saveChats(chats);
+        res.status(201).json(newMessage);
     }
-    const chat = chats.find(c => c.id === chatId);
-    if (!chat) {
-        return res.status(404).send('Chat not found!');
-    }
-    const newMessage = new Message(chatId, from, content);
-    console.log(`New message from user ${chalk.greenBright(from)} in chat ${chalk.greenBright(chatId)}: ${chalk.grey(content)}`);
-    chat.messages.push(newMessage);
-    saveChats(chats);
-    res.status(201).json(newMessage);
-});
+);
 
 
 
@@ -354,6 +384,20 @@ app.get('/error', (req, res, next) => {
     // This will trigger the error handler
     next(new Error('This is a test internal server error!'));
 });
+
+app.get(
+    '/testErrResponse/:code',
+    (req, res) => {
+        const code = Number(req.params.code)
+        if (code < 400 || code > 599) {
+            res.redirect('/')
+        } else if (code >= 400 && code <= 599) {
+            statusCode(req, res, code)
+        } else {
+            res.redirect('/')
+        }
+    }
+)
 
 
 

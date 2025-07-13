@@ -5,12 +5,14 @@
 Only versions `1.1.0` and above have secure password hashing.
 Direct messages are not encrypted (yet).
 Only versions `1.3.3` and above support input validation against scripting.
+Only versions `2.1.0` and above have server overload protection.
 
 | Version         | Supported            |
 | --------------- | -------------------- |
+| 2.1.0 >         | Character Limits     |
 | 1.3.3 >         | Input Validation     |
-| 1.3.0 -> 1.3.3  | No DM encryption     |
-| 1.1.0 -> 1.3.0  | SHA1 Backend Hashing |
+| 1.3.0 >         | No DM encryption     |
+| 1.1.0 >         | SHA1 Backend Hashing |
 | < 1.1.0         | No security          |
 
 ## Reporting Issues
