@@ -1,0 +1,11 @@
+.github/
+node_modules/
+.env
+package-lock.json
+
+# Keep backups directory but ignore temporary files
+backups/*.tmp
+backups/*.log
+
+# MongoDB migration logs
+migration.log

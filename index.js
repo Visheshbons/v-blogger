@@ -1,44 +1,65 @@
-import express from 'express';
-import chalk from 'chalk';
-import cookieParser from 'cookie-parser';
-import { statusCode } from './errors.js';
-import { Post, posts, savePosts, dateConversion, User, users, saveUsers, Chat, Message, chats, saveChats, loadChats, findChatIdByUsers, removeChatsForUser, getNextPostId } from './appConfig.js';
-import { SHA1 } from './sha1.js';
-import { marked } from 'marked';
-import sanitizeHtml from 'sanitize-html';
-import hljs from 'highlight.js';
+import express from "express";
+import chalk from "chalk";
+import cookieParser from "cookie-parser";
+import { statusCode } from "./errors.js";
+import {
+  Post,
+  posts,
+  savePosts,
+  dateConversion,
+  User,
+  users,
+  saveUsers,
+  addUser,
+  addPost,
+  addChat,
+  Chat,
+  Message,
+  chats,
+  saveChats,
+  loadChats,
+  findChatIdByUsers,
+  removeChatsForUser,
+  getNextPostId,
+  getNextUserId,
+} from "./appConfig.js";
+import { SHA1 } from "./sha1.js";
+import { marked } from "marked";
+import sanitizeHtml from "sanitize-html";
+import hljs from "highlight.js";
+
+import dotenv from "dotenv";
 
 const app = express();
 const port = process.env.PORT || 3000;
 const AutoMaintenanceMode = true;
 
-
+dotenv.config();
 
 // ---------- Middleware ---------- \\
 
-app.use(express.static('public'));
+app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
 marked.setOptions({
-  highlight: function(code, lang) {
+  highlight: function (code, lang) {
     if (lang && hljs.getLanguage(lang)) {
       return hljs.highlight(code, { language: lang }).value;
     } else {
       return hljs.highlightAuto(code).value;
     }
-  }
+  },
 });
-
 
 const forbiddenChars = /[\/\\{}\[\]<>\"']/;
 
 function checkForbiddenChars(fields) {
-    return (req, res, next) => {
-        for (const field of fields) {
-            if (req.body[field] && forbiddenChars.test(req.body[field])) {
-                return res.status(400).send(`
+  return (req, res, next) => {
+    for (const field of fields) {
+      if (req.body[field] && forbiddenChars.test(req.body[field])) {
+        return res.status(400).send(`
                     <!DOCTYPE html>
                     <html lang="en">
                     <head>
@@ -60,305 +81,360 @@ function checkForbiddenChars(fields) {
                     </body>
                     </html>
                 `);
-            }
-        }
-        next();
-    };
+      }
+    }
+    next();
+  };
 }
 
-
 function renderMarkdown(mdText) {
-    const html = marked.parse(mdText);
-    return sanitizeHtml(html, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-        allowedAttributes: {
-            ...sanitizeHtml.defaults.allowedAttributes,
-            img: ['src', 'alt']
-        }
-    });
+  const html = marked.parse(mdText);
+  return sanitizeHtml(html, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      img: ["src", "alt"],
+    },
+  });
 }
 
 function adminOnly(req, res, next) {
-    // Assuming req.cookies.id is a string, convert to number
-    if (Number(req.cookies.id) === 1) {
-        return next();
-    }
-    return statusCode(req, res, 403); // Using custom API
+  // Assuming req.cookies.id is a string, convert to number
+  if (Number(req.cookies.id) === 1) {
+    return next();
+  }
+  return statusCode(req, res, 403); // Using custom API
 }
 
 function limitPostLength(fields, maxLength = 5000) {
-    return (req, res, next) => {
-        for (const field of fields) {
-            if (req.body[field] && req.body[field].length > maxLength) {
-                return statusCode(req, res, 413);
-            };
-        };
-        next();
-    };
+  return (req, res, next) => {
+    for (const field of fields) {
+      if (req.body[field] && req.body[field].length > maxLength) {
+        return statusCode(req, res, 413);
+      }
+    }
+    next();
+  };
 }
-
-
-
 
 // ---------- Routes ---------- \\
 
-app.get('/', (req, res) => {
-    statusCode(req, res, 200);
-    let userLoggedInRN = !!req.cookies.loggedIn;
+app.get("/", (req, res) => {
+  statusCode(req, res, 200);
+  let userLoggedInRN = !!req.cookies.loggedIn;
 
-    // Convert post content from Markdown to sanitized HTML
-    const renderedPosts = posts.map(post => ({
-        ...post,
-        htmlContent: renderMarkdown(post.content)
-    }));
+  // Convert post content from Markdown to sanitized HTML
+  const renderedPosts = posts.map((post) => ({
+    ...post,
+    htmlContent: renderMarkdown(post.content),
+  }));
 
-    res.render('index.ejs', {
-        posts: renderedPosts,
-        users,
-        loggedIn: req.cookies.loggedIn || false,
-        userId: req.cookies.id || null,
-        userLoggedInRN
-    });
+  res.render("index.ejs", {
+    posts: renderedPosts,
+    users,
+    loggedIn: req.cookies.loggedIn || false,
+    userId: req.cookies.id || null,
+    userLoggedInRN,
+  });
 });
 
-app.get('/post', (req, res) => {
+app
+  .get("/post", (req, res) => {
     statusCode(req, res, 200);
     let userLoggedInRN;
     if (!req.cookies.loggedIn) {
-        userLoggedInRN = false;
+      userLoggedInRN = false;
     } else {
-        userLoggedInRN = true;
+      userLoggedInRN = true;
     }
-    res.render('post.ejs', { userLoggedInRN });
-}).post(
-    '/post',
-    limitPostLength(['content'], 5000),
-    limitPostLength(['title'], 500),
-    (req, res) => {
-        try {
-            statusCode(req, res, 202);
-            console.log(req.body); // Debugging line
-            let { title, content } = req.body;
-            if (!title || !content) {
-                return res.status(400).send('Title and content are required!');
-            }
-            const userId = req.cookies.id;
-            const newId = getNextPostId(posts);
-            const newPost = new Post(title, content, userId ? Number(userId) : null, undefined, newId);
-            posts.push(newPost);
-            savePosts(posts);
-            console.log(`New post added: ${title}`);
-            res.status(201).redirect("/");
-        } catch (error) {
-            console.error('Error creating post:', chalk.red(error));
-            return statusCode(req, res, 500)
-        }
-    }
-);
-
-
-app.get('/login', (req, res) => {
-    statusCode(req, res, 200);
-    let userLoggedInRN;
-    if (!req.cookies.loggedIn) {
-        userLoggedInRN = false;
-    } else {
-        userLoggedInRN = true;
-    }
-    res.render('login.ejs', { userLoggedInRN, SHA1 });
-}).post(
-    '/login',
-    checkForbiddenChars(['username', 'password_sha1']),
-    (req, res) => {
+    res.render("post.ejs", { userLoggedInRN });
+  })
+  .post(
+    "/post",
+    limitPostLength(["content"], 5000),
+    limitPostLength(["title"], 500),
+    async (req, res) => {
+      try {
         statusCode(req, res, 202);
         console.log(req.body); // Debugging line
-        const { username, password_sha1 } = req.body;
-        const user = users.find(u => u.username === username && u.password === password_sha1);
-        if (!user) {
-            return res.status(401).send('Invalid username or password!');
-            console.log(`${chalk.red(`401`)}: Attempted login with invalid credentials for user: ${username}`);
+        let { title, content } = req.body;
+        if (!title || !content) {
+          return res.status(400).send("Title and content are required!");
         }
-        console.log(`User logged in: ${username}`);
-        res.status(200).cookie('loggedIn', true).cookie('id', user.id).redirect("/");
-    }
-);
+        const userId = req.cookies.id;
+        const newId = getNextPostId(posts);
+        const newPost = new Post(
+          title,
+          content,
+          userId ? Number(userId) : null,
+          undefined,
+          newId,
+        );
 
-app.get('/signup', (req, res) => {
+        await addPost(newPost);
+        console.log(`New post added: ${title}`);
+        res.status(201).redirect("/");
+      } catch (error) {
+        console.error("Error creating post:", chalk.red(error));
+        return statusCode(req, res, 500);
+      }
+    },
+  );
+
+app
+  .get("/login", (req, res) => {
     statusCode(req, res, 200);
     let userLoggedInRN;
     if (!req.cookies.loggedIn) {
-        userLoggedInRN = false;
+      userLoggedInRN = false;
     } else {
-        userLoggedInRN = true;
+      userLoggedInRN = true;
     }
-    res.render('signup.ejs', { userLoggedInRN });
-}).post('/signup', checkForbiddenChars(['username', 'password']), (req, res) => {
-    statusCode(req, res, 202);
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).send('Username and password are required!');
-    }
-    const existingUser = users.find(u => u.username === username);
-    if (existingUser) {
-        return res.status(409).send('Username already exists!');
-    }
-    const newUser = new User(username, SHA1(password));
-    users.push(newUser);
-    saveUsers(users);
-    console.log(`New user signed up: ${chalk.greenBright(username)}`);
-    res.status(201).cookie('loggedIn', true).cookie('id', newUser.id).redirect("/");
-});
+    res.render("login.ejs", { userLoggedInRN, SHA1 });
+  })
+  .post(
+    "/login",
+    checkForbiddenChars(["username", "password_sha1"]),
+    (req, res) => {
+      statusCode(req, res, 202);
+      console.log(req.body); // Debugging line
+      const { username, password_sha1 } = req.body;
+      const user = users.find(
+        (u) => u.username === username && u.password === password_sha1,
+      );
+      if (!user) {
+        return res.status(401).send("Invalid username or password!");
+        console.log(
+          `${chalk.red(`401`)}: Attempted login with invalid credentials for user: ${username}`,
+        );
+      }
+      console.log(`User logged in: ${username}`);
+      res
+        .status(200)
+        .cookie("loggedIn", true)
+        .cookie("id", user.id)
+        .redirect("/");
+    },
+  );
 
-app.get('/logout', (req, res) => {
-    statusCode(req, res, 200);
-    res.clearCookie('loggedIn');
-    res.clearCookie('id');
-    res.redirect('/');
-});
-
-app.get('/posts', (req, res) => {
+app
+  .get("/signup", (req, res) => {
     statusCode(req, res, 200);
     let userLoggedInRN;
     if (!req.cookies.loggedIn) {
-        userLoggedInRN = false;
+      userLoggedInRN = false;
     } else {
-        userLoggedInRN = true;
+      userLoggedInRN = true;
+    }
+    res.render("signup.ejs", { userLoggedInRN });
+  })
+  .post(
+    "/signup",
+    checkForbiddenChars(["username", "password"]),
+    async (req, res) => {
+      try {
+        statusCode(req, res, 202);
+        const { username, password } = req.body;
+        if (!username || !password) {
+          return res.status(400).send("Username and password are required!");
+        }
+        const existingUser = users.find((u) => u.username === username);
+        if (existingUser) {
+          return res.status(409).send("Username already exists!");
+        }
+
+        const newUserId = await getNextUserId();
+        const newUser = new User(username, SHA1(password), newUserId);
+        await addUser(newUser);
+
+        console.log(`New user signed up: ${chalk.greenBright(username)}`);
+        res
+          .status(201)
+          .cookie("loggedIn", true)
+          .cookie("id", newUser.id)
+          .redirect("/");
+      } catch (error) {
+        console.error("Error creating user:", chalk.red(error));
+        return statusCode(req, res, 500);
+      }
+    },
+  );
+
+app.get("/logout", (req, res) => {
+  statusCode(req, res, 200);
+  res.clearCookie("loggedIn");
+  res.clearCookie("id");
+  res.redirect("/");
+});
+
+app
+  .get("/posts", (req, res) => {
+    statusCode(req, res, 200);
+    let userLoggedInRN;
+    if (!req.cookies.loggedIn) {
+      userLoggedInRN = false;
+    } else {
+      userLoggedInRN = true;
     }
 
-
-    const renderedPosts = posts.map(post => ({
-        ...post,
-        htmlContent: renderMarkdown(post.content)
+    const renderedPosts = posts.map((post) => ({
+      ...post,
+      htmlContent: renderMarkdown(post.content),
     }));
 
-    res.render('posts.ejs', {
-        posts: renderedPosts,
-        users,
-        loggedIn: req.cookies.loggedIn || false,
-        userId: req.cookies.id || null,
-        userLoggedInRN
+    res.render("posts.ejs", {
+      posts: renderedPosts,
+      users,
+      loggedIn: req.cookies.loggedIn || false,
+      userId: req.cookies.id || null,
+      userLoggedInRN,
     });
-}).post('/posts/:id/like', (req, res) => {
+  })
+  .post("/posts/:id/like", async (req, res) => {
     try {
-        const post = posts.find(p => p.id == req.params.id);
-        if (!post) return statusCode(req, res, 404);
+      const post = posts.find((p) => p.id == req.params.id);
+      if (!post) return statusCode(req, res, 404);
 
-        const userId = Number(req.cookies.id);
-        if (!userId) return statusCode(req, res, 401);
+      const userId = Number(req.cookies.id);
+      if (!userId) return statusCode(req, res, 401);
 
-        post.likedBy = post.likedBy || [];
-        const likedIndex = post.likedBy.indexOf(userId);
-        if (likedIndex !== -1) {
-            post.likedBy.splice(likedIndex, 1);
-            post.likes = Math.max(0, (post.likes || 0) - 1);
-            console.log(`User ${chalk.greenBright(userId)} unliked post ${chalk.greenBright(post.id)}`);
-            savePosts(posts);
-            return res.json({ likes: post.likes, liked: false });
-        } else {
-            post.likes = (post.likes || 0) + 1;
-            post.likedBy.push(Number(userId));
-            console.log(`User ${chalk.greenBright(userId)} liked post ${chalk.greenBright(post.id)}`);
-            savePosts(posts);
-            res.json({ likes: post.likes, liked: true });
-        }
+      post.likedBy = post.likedBy || [];
+      const likedIndex = post.likedBy.indexOf(userId);
+      if (likedIndex !== -1) {
+        post.likedBy.splice(likedIndex, 1);
+        post.likes = Math.max(0, (post.likes || 0) - 1);
+        console.log(
+          `User ${chalk.greenBright(userId)} unliked post ${chalk.greenBright(post.id)}`,
+        );
+        await savePosts(posts);
+        return res.json({ likes: post.likes, liked: false });
+      } else {
+        post.likes = (post.likes || 0) + 1;
+        post.likedBy.push(Number(userId));
+        console.log(
+          `User ${chalk.greenBright(userId)} liked post ${chalk.greenBright(post.id)}`,
+        );
+        await savePosts(posts);
+        res.json({ likes: post.likes, liked: true });
+      }
     } catch (err) {
-        console.error('Like route error:', chalk.red(err));
-        return statusCode(req, res, 500);
+      console.error("Like route error:", chalk.red(err));
+      return statusCode(req, res, 500);
     }
-}).post('/posts/:id/comments', (req, res) => {
-    const post = posts.find(p => p.id == req.params.id);
-    if (!post) return statusCode(req, res, 404);
-    const { content, author } = req.body;
-    if (!content || !author) return statusCode(req, res, 400);
-    post.comments = post.comments || [];
-    post.comments.push({
+  })
+  .post("/posts/:id/comments", async (req, res) => {
+    try {
+      const post = posts.find((p) => p.id == req.params.id);
+      if (!post) return statusCode(req, res, 404);
+      const { content, author } = req.body;
+      if (!content || !author) return statusCode(req, res, 400);
+      post.comments = post.comments || [];
+      post.comments.push({
         content,
         author: Number(author),
-        date: new Date().toISOString()
-    });
-    savePosts(posts);
-    res.json(post.comments);
-    console.log(`New comment added to post ${chalk.greenBright(post.id)} by user ${chalk.greenBright(author)}: ${chalk.grey(content)}`);
+        date: new Date().toISOString(),
+      });
+      await savePosts(posts);
+      res.json(post.comments);
+      console.log(
+        `New comment added to post ${chalk.greenBright(post.id)} by user ${chalk.greenBright(author)}: ${chalk.grey(content)}`,
+      );
+    } catch (err) {
+      console.error("Comment route error:", chalk.red(err));
+      return statusCode(req, res, 500);
+    }
+  });
+
+app.get("/profile", (req, res) => {
+  statusCode(req, res, 200);
+  let userLoggedInRN;
+  if (!req.cookies.loggedIn) {
+    userLoggedInRN = false;
+  } else {
+    userLoggedInRN = true;
+  }
+  const userId = req.cookies.id;
+  const user = users.find((u) => u.id === Number(userId));
+  if (!user) {
+    return statusCode(req, res, 403);
+  }
+  res.render("user.ejs", { user, users, userLoggedInRN });
 });
 
-
-app.get('/profile', (req, res) => {
-    statusCode(req, res, 200);
-    let userLoggedInRN;
-    if (!req.cookies.loggedIn) {
-        userLoggedInRN = false;
-    } else {
-        userLoggedInRN = true;
-    }
-    const userId = req.cookies.id;
-    const user = users.find(u => u.id === Number(userId));
-    if (!user) {
-        return statusCode(req, res, 403);
-    }
-    res.render('user.ejs', { user, users, userLoggedInRN });
-});
-
-app.get('/chats/:userID', (req, res) => {
+app
+  .get("/chats/:userID", (req, res) => {
     statusCode(req, res, 200);
     const userID = Number(req.params.userID);
-    const userChats = chats.filter(chat => chat.users.includes(userID));
+    const userChats = chats.filter((chat) => chat.users.includes(userID));
     res.json(userChats);
-}).post(
-    '/chats',
-    checkForbiddenChars(['userA', 'userB']),
-    (req, res) => {
-        statusCode(req, res, 202);
-        let { userA, userB } = req.body;
-        userA = Number(userA);
-        userB = Number(userB);
-        if (!userA || !userB) {
-            return res.status(400).send('User A and User B are required!');
-        }
-        const chatObj = findChatIdByUsers(userA, userB);
-        if (chatObj) {
-            return res.status(409).send('Chat already exists!');
-        }
-        const newChat = new Chat(chats.length + 1, [userA, userB]);
-        chats.push(newChat);
-        saveChats(chats);
-        res.status(201).json(newChat);
+  })
+  .post("/chats", checkForbiddenChars(["userA", "userB"]), async (req, res) => {
+    try {
+      statusCode(req, res, 202);
+      let { userA, userB } = req.body;
+      userA = Number(userA);
+      userB = Number(userB);
+      if (!userA || !userB) {
+        return res.status(400).send("User A and User B are required!");
+      }
+      const chatObj = findChatIdByUsers(userA, userB);
+      if (chatObj) {
+        return res.status(409).send("Chat already exists!");
+      }
+      const newChat = new Chat(chats.length + 1, [userA, userB]);
+      await addChat(newChat);
+      res.status(201).json(newChat);
+    } catch (err) {
+      console.error("Chat creation error:", chalk.red(err));
+      return statusCode(req, res, 500);
     }
-).delete('/chats/:chatId', (req, res) => {
-    statusCode(req, res, 202);
-    const chatId = req.params.chatId;
-    const chatIndex = chats.findIndex(chat => chat.id === Number(chatId));
-    if (chatIndex === -1) {
-        return res.status(404).send('Chat not found!');
+  })
+  .delete("/chats/:chatId", async (req, res) => {
+    try {
+      statusCode(req, res, 202);
+      const chatId = req.params.chatId;
+      const chatIndex = chats.findIndex((chat) => chat.id === Number(chatId));
+      if (chatIndex === -1) {
+        return res.status(404).send("Chat not found!");
+      }
+      chats.splice(chatIndex, 1);
+      await saveChats(chats);
+      res.status(204).send();
+    } catch (err) {
+      console.error("Chat deletion error:", chalk.red(err));
+      return statusCode(req, res, 500);
     }
-    chats.splice(chatIndex, 1);
-    saveChats(chats);
-    res.status(204).send();
-}).post(
-    '/chats/:chatId/messages',
-    checkForbiddenChars(['from', 'content']),
-    limitPostLength(['content'], 500),
-    (req, res) => {
+  })
+  .post(
+    "/chats/:chatId/messages",
+    checkForbiddenChars(["from", "content"]),
+    limitPostLength(["content"], 500),
+    async (req, res) => {
+      try {
         statusCode(req, res, 202);
         const chatId = Number(req.params.chatId);
         let { from, content } = req.body;
         from = Number(from);
         if (!from || !content) {
-            return res.status(400).send('From and content are required!');
+          return res.status(400).send("From and content are required!");
         }
-        const chat = chats.find(c => c.id === chatId);
+        const chat = chats.find((c) => c.id === chatId);
         if (!chat) {
-            return res.status(404).send('Chat not found!');
+          return res.status(404).send("Chat not found!");
         }
         const newMessage = new Message(chatId, from, content);
-        console.log(`New message from user ${chalk.greenBright(from)} in chat ${chalk.greenBright(chatId)}: ${chalk.grey(content)}`);
+        console.log(
+          `New message from user ${chalk.greenBright(from)} in chat ${chalk.greenBright(chatId)}: ${chalk.grey(content)}`,
+        );
         chat.messages.push(newMessage);
-        saveChats(chats);
+        await saveChats(chats);
         res.status(201).json(newMessage);
-    }
-);
-
-
-
+      } catch (err) {
+        console.error("Message creation error:", chalk.red(err));
+        return statusCode(req, res, 500);
+      }
+    },
+  );
 
 // ---------- Secret Routes ---------- \\
 
@@ -374,80 +450,68 @@ app.get('/chats/:userID', (req, res) => {
 //     res.status(200).sendFile('./posts.json')
 // });
 
-
-
-
 // ---------- Debug routes ---------- \\
 
-app.get('/error', (req, res, next) => {
-    // This will trigger the error handler
-    next(new Error('This is a test internal server error!'));
+app.get("/error", (req, res, next) => {
+  // This will trigger the error handler
+  next(new Error("This is a test internal server error!"));
 });
 
-app.get(
-    '/testErrResponse/:code',
-    (req, res) => {
-        const code = Number(req.params.code)
-        if (code < 400 || code > 599) {
-            res.redirect('/')
-        } else if (code >= 400 && code <= 599) {
-            statusCode(req, res, code)
-        } else {
-            res.redirect('/')
-        }
-    }
-)
-
-
-
+app.get("/testErrResponse/:code", (req, res) => {
+  const code = Number(req.params.code);
+  if (code < 400 || code > 599) {
+    res.redirect("/");
+  } else if (code >= 400 && code <= 599) {
+    statusCode(req, res, code);
+  } else {
+    res.redirect("/");
+  }
+});
 
 // ---------- Error Handler ---------- \\
 
 app.use((req, res, next) => {
-    statusCode(req, res, 404);
-    next();
+  statusCode(req, res, 404);
+  next();
 });
 
 app.use((err, req, res, next) => {
-    statusCode(req, res, err.status || 500);
+  statusCode(req, res, err.status || 500);
 });
-
-
-
 
 // ---------- Runtime ---------- \\
 
+// Since the database connection is already initialized in appConfig,
+// we can start the server directly
 app.listen(port, () => {
-    console.log(`Server is running on port ${chalk.green(port)}`);
+  console.log(`Server is running on port ${chalk.green(port)}`);
 });
 
-import { spawn } from 'child_process';
+import { spawn } from "child_process";
 
 function runOnShutdown() {
+  console.log(
+    chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green("STARTING...")}`),
+  );
 
-    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green('STARTING...')}`));
+  // Build the command and arguments
+  const maintenancePath = "../../Please Wait/Fullstack"; // Adjust as needed
+  const child = spawn("node", ["index.js"], {
+    cwd: maintenancePath, // Set working directory
+    detached: true, // Detach from parent
+    stdio: "ignore", // Ignore stdio so parent can exit
+    shell: true, // Use shell for Windows compatibility
+  });
 
-    // Build the command and arguments
-    const maintenancePath = '../../Please Wait/Fullstack'; // Adjust as needed
-    const child = spawn(
-        'node',
-        ['index.js'],
-        {
-            cwd: maintenancePath,    // Set working directory
-            detached: true,          // Detach from parent
-            stdio: 'ignore',         // Ignore stdio so parent can exit
-            shell: true              // Use shell for Windows compatibility
-    });
-
-    child.unref(); // Allow the child to keep running after parent exits
-    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green('RUNNING')}`));
-    process.exit(0);
+  child.unref(); // Allow the child to keep running after parent exits
+  console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green("RUNNING")}`));
+  process.exit(0);
 }
 
 if (AutoMaintenanceMode) {
-    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green('ACTIVE')}`));
-    process.on('SIGINT', runOnShutdown);
-    process.on('SIGTERM', runOnShutdown);
+  console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.green("ACTIVE")}`));
+  process.on("SIGINT", runOnShutdown);
+  process.on("SIGTERM", runOnShutdown);
 } else {
-    console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.red('INACTIVE')}`));
+  console.log(chalk.yellow(`[AUTO MAINTENENCE]: ${chalk.red("INACTIVE")}`));
 }

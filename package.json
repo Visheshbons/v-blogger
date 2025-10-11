@@ -5,7 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "migrate": "node migrate-to-mongodb.js",
+    "backup": "node backup-from-mongodb.js"
   },
   "keywords": [],
   "author": "",
@@ -13,10 +17,12 @@
   "dependencies": {
     "chalk": "^5.4.1",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "highlight.js": "^11.11.1",
     "marked": "^16.0.0",
+    "mongodb": "^6.20.0",
     "nodemon": "^3.1.10",
     "sanitize-html": "^2.17.0"
   }
