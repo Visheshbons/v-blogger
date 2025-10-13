@@ -18,7 +18,7 @@
     <main>
         <% if (loggedIn && userId) { %>
             <% const user = users.find(u => u.id == userId); %>
-            <h2>Welcome, <%= user ? user.username : 'User' %>!</h2>
+            <h2>Welcome, <%= user ? user.username : 'Guest' %>!</h2>
         <% } else { %>
             <h2>Welcome to V-Blogger</h2>
         <% } %>
@@ -30,17 +30,19 @@
             <article>
                 <h4><%- post.title %></h4>
                 <div class="markdown-content"><%- post.htmlContent %></div>
-                <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by 
+                <p><small>Posted on (UTC): <span data-post-date="<%- post.date %>"></span> by
                     <% if (typeof post.getAuthorName === 'function') { %>
                         <%- post.getAuthorName() %>
-                    <% } else { %>
+                    <% } else if ((users.find(u => u.id === post.author)?.username || post.author) !== null) { %>
                         <%= users.find(u => u.id === post.author)?.username || post.author %>
+                    <% } else { %>
+                        Anonymous
                     <% } %>
                 </small></p>
 
-                <% 
+                <%
                     const userIdNum = Number(userId);
-                    const alreadyLiked = post.likedBy && post.likedBy.includes(userIdNum); 
+                    const alreadyLiked = post.likedBy && post.likedBy.includes(userIdNum);
                 %>
                 <form class="like-form" data-post-id="<%= post.id %>">
                     <button type="submit" class="like-btn" data-liked="<%= alreadyLiked %>">
