@@ -7,6 +7,9 @@
             <li><a href="/post">Post</a></li>
             <li><a href="/posts">All Posts</a></li>
             <li><a href="/profile">Profile</a></li>
+            <% if (isAdmin) { %>
+                <li><a href="/analytics">Analytics</a></li>
+            <% } %>
 
             <% if (userLoggedInRN) { %>
                 <li><a href="/logout">Logout</a></li>

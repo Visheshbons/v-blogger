@@ -22,6 +22,12 @@ import {
   removeChatsForUser,
   getNextPostId,
   getNextUserId,
+  // analytics helpers (persistent)
+  recordAnalyticsEvent,
+  getAnalyticsHourly,
+  getAnalyticsDailyTotals,
+  getAnalyticsWeeklyAverages,
+  loadVersionMarkers,
 } from "./appConfig.js";
 import { SHA1 } from "./sha1.js";
 import { marked } from "marked";
@@ -32,9 +38,14 @@ import dotenv from "dotenv";
 
 const app = express();
 const port = process.env.PORT || 3000;
-const AutoMaintenanceMode = true;
+const AutoMaintenanceMode = false;
 
 dotenv.config();
+
+// ---------- Analytics ---------- \\
+let homeVisits = 0;
+let logins = 0;
+let signups = 0;
 
 // ---------- Middleware ---------- \\
 
@@ -120,8 +131,20 @@ function limitPostLength(fields, maxLength = 5000) {
 // ---------- Routes ---------- \\
 
 app.get("/", (req, res) => {
+  // Data is persisted in MongoDB via appConfig — no local JSON update on each request
   statusCode(req, res, 200);
+
+  // Analytics: count a visit to the home page
+  homeVisits++;
+  // Persist the visit event to the analytics collection (fire-and-forget)
+  if (typeof recordAnalyticsEvent === "function") {
+    recordAnalyticsEvent({ type: "visit", ts: new Date().toISOString() }).catch(
+      (err) => console.error("Analytics record error:", chalk.red(err)),
+    );
+  }
+
   let userLoggedInRN = !!req.cookies.loggedIn;
+  const isAdmin = Number(req.cookies.id) === 1;
 
   // Convert post content from Markdown to sanitized HTML
   const renderedPosts = posts.map((post) => ({
@@ -135,6 +158,7 @@ app.get("/", (req, res) => {
     loggedIn: req.cookies.loggedIn || false,
     userId: req.cookies.id || null,
     userLoggedInRN,
+    isAdmin,
   });
 });
 
@@ -147,7 +171,8 @@ app
     } else {
       userLoggedInRN = true;
     }
-    res.render("post.ejs", { userLoggedInRN });
+    const isAdmin = Number(req.cookies.id) === 1;
+    res.render("post.ejs", { userLoggedInRN, isAdmin });
   })
   .post(
     "/post",
@@ -162,7 +187,8 @@ app
           return res.status(400).send("Title and content are required!");
         }
         const userId = req.cookies.id;
-        const newId = getNextPostId(posts);
+        // getNextPostId is now provided by the DB helper and is async — request the next ID
+        const newId = await getNextPostId();
         const newPost = new Post(
           title,
           content,
@@ -190,7 +216,8 @@ app
     } else {
       userLoggedInRN = true;
     }
-    res.render("login.ejs", { userLoggedInRN, SHA1 });
+    const isAdmin = Number(req.cookies.id) === 1;
+    res.render("login.ejs", { userLoggedInRN, SHA1, isAdmin });
   })
   .post(
     "/login",
@@ -209,6 +236,20 @@ app
         );
       }
       console.log(`User logged in: ${username}`);
+
+      // Analytics: successful login
+      logins++;
+      // Persist the login event
+      if (typeof recordAnalyticsEvent === "function") {
+        recordAnalyticsEvent({
+          type: "login",
+          ts: new Date().toISOString(),
+          meta: { username },
+        }).catch((err) =>
+          console.error("Analytics record error:", chalk.red(err)),
+        );
+      }
+
       res
         .status(200)
         .cookie("loggedIn", true)
@@ -226,7 +267,8 @@ app
     } else {
       userLoggedInRN = true;
     }
-    res.render("signup.ejs", { userLoggedInRN });
+    const isAdmin = Number(req.cookies.id) === 1;
+    res.render("signup.ejs", { userLoggedInRN, isAdmin });
   })
   .post(
     "/signup",
@@ -246,6 +288,19 @@ app
         const newUserId = await getNextUserId();
         const newUser = new User(username, SHA1(password), newUserId);
         await addUser(newUser);
+
+        // Analytics: successful signup
+        signups++;
+        // Persist the signup event
+        if (typeof recordAnalyticsEvent === "function") {
+          recordAnalyticsEvent({
+            type: "signup",
+            ts: new Date().toISOString(),
+            meta: { username },
+          }).catch((err) =>
+            console.error("Analytics record error:", chalk.red(err)),
+          );
+        }
 
         console.log(`New user signed up: ${chalk.greenBright(username)}`);
         res
@@ -282,12 +337,15 @@ app
       htmlContent: renderMarkdown(post.content),
     }));
 
+    const isAdmin = Number(req.cookies.id) === 1;
+
     res.render("posts.ejs", {
       posts: renderedPosts,
       users,
       loggedIn: req.cookies.loggedIn || false,
       userId: req.cookies.id || null,
       userLoggedInRN,
+      isAdmin,
     });
   })
   .post("/posts/:id/like", async (req, res) => {
@@ -358,7 +416,8 @@ app.get("/profile", (req, res) => {
   if (!user) {
     return statusCode(req, res, 403);
   }
-  res.render("user.ejs", { user, users, userLoggedInRN });
+  const isAdmin = Number(req.cookies.id) === 1;
+  res.render("user.ejs", { user, users, userLoggedInRN, isAdmin });
 });
 
 app
@@ -437,6 +496,101 @@ app
   );
 
 // ---------- Secret Routes ---------- \\
+
+// Analytics page (admin-only) — render EJS page that will fetch aggregated data via API endpoints
+app.get("/analytics", adminOnly, (req, res) => {
+  statusCode(req, res, 200);
+  const userLoggedInRN = !!req.cookies.loggedIn;
+  const isAdmin = Number(req.cookies.id) === 1;
+
+  // Render the analytics page. The page will call the API endpoints below to fetch
+  // time-series and aggregated data and draw charts client-side.
+  res.render("analytics.ejs", {
+    homeVisits,
+    logins,
+    signups,
+    totalUsers: users.length,
+    totalPosts: posts.length,
+    userLoggedInRN,
+    isAdmin,
+  });
+});
+
+// ---------- Analytics API (admin-only) ---------- \\
+app.get("/api/analytics/hourly", adminOnly, async (req, res) => {
+  try {
+    const date = req.query.date || new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const type = req.query.type || "visit";
+    if (typeof getAnalyticsHourly !== "function") {
+      return res.status(500).json({ error: "Analytics backend not available" });
+    }
+    const counts = await getAnalyticsHourly(date, type);
+    const labels = Array.from({ length: 24 }, (_, i) =>
+      String(i).padStart(2, "0"),
+    );
+    res.json({ labels, data: counts });
+  } catch (err) {
+    console.error("Hourly analytics error:", chalk.red(err));
+    return statusCode(req, res, 500);
+  }
+});
+
+app.get("/api/analytics/daily", adminOnly, async (req, res) => {
+  try {
+    const from = req.query.from;
+    const to = req.query.to;
+    const type = req.query.type || "visit";
+    if (!from || !to)
+      return res
+        .status(400)
+        .json({ error: "from and to query parameters required (YYYY-MM-DD)" });
+    if (typeof getAnalyticsDailyTotals !== "function") {
+      return res.status(500).json({ error: "Analytics backend not available" });
+    }
+    const series = await getAnalyticsDailyTotals(from, to, type);
+    res.json(series);
+  } catch (err) {
+    console.error("Daily analytics error:", chalk.red(err));
+    return statusCode(req, res, 500);
+  }
+});
+
+app.get("/api/analytics/weekly-averages", adminOnly, async (req, res) => {
+  try {
+    const days = Number(req.query.days) || 28;
+    const type = req.query.type || "visit";
+    if (typeof getAnalyticsWeeklyAverages !== "function") {
+      return res.status(500).json({ error: "Analytics backend not available" });
+    }
+    const averages = await getAnalyticsWeeklyAverages(days, type);
+    // Return averages in order Sunday..Saturday
+    res.json({
+      days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      averages,
+    });
+  } catch (err) {
+    console.error("Weekly averages error:", chalk.red(err));
+    return statusCode(req, res, 500);
+  }
+});
+
+app.get("/api/analytics/version-markers", adminOnly, async (req, res) => {
+  try {
+    if (typeof loadVersionMarkers !== "function") {
+      return res
+        .status(500)
+        .json({ error: "Version markers loader not available" });
+    }
+    // loadVersionMarkers will attempt to read the JSON file you place in the project root
+    // (or another path if you modify the helper). Default expects a JSON array of
+    // { version: 'v3.0.1', ts: '2025-10-12T01:02:03Z' }.
+    const markers = await loadVersionMarkers();
+    res.json(markers);
+  } catch (err) {
+    console.error("Version markers error:", chalk.red(err));
+    return statusCode(req, res, 500);
+  }
+});
 
 // app.get('/letMeSeeAllThePrivateMessages', (req, res) => {
 //     res.status(200).sendFile('./chats.json')

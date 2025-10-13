@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>Analytics - V-Blogger</title>
+
+  <style>
+    .analytics-container { max-width: 1100px; margin: 2rem auto; padding: 1rem; }
+    .top-stats { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .stat-card { flex:1 1 180px; background:#fff; border:1px solid #e1e1e1; padding:1rem; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.03); }
+    .stat-card h4 { margin:0 0 .25rem 0; font-size:.9rem; color:#333; }
+    .stat-card p { margin:0; font-size:1.4rem; font-weight:700; color:#111; }
+    .charts { display:grid; grid-template-columns: 1fr; gap:1.25rem; margin-top:1.25rem; }
+    @media(min-width:1000px){ .charts { grid-template-columns: 1fr 1fr; } .charts .wide { grid-column: 1 / -1; } }
+    .chart-card { background:#fff; border:1px solid #e9e9e9; padding:1rem; border-radius:6px; }
+    .meta { color:#666; font-size:.9rem; margin-top:.5rem; }
+    .controls { display:flex; gap:.5rem; align-items:center; margin-bottom:.75rem; }
+    .small-link { font-size:.9rem; color:#0066cc; text-decoration:none; }
+  </style>
+
+  <!-- Chart.js + annotation plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+
+  <main class="analytics-container">
+    <h1>V-Blogger — Analytics</h1>
+    <div class="top-stats" role="region" aria-label="summary statistics">
+      <div class="stat-card"><h4>Home visits (since server start)</h4><p id="c-homeVisits"><%= typeof homeVisits !== 'undefined' ? homeVisits : 0 %></p></div>
+      <div class="stat-card"><h4>Logins (since server start)</h4><p id="c-logins"><%= typeof logins !== 'undefined' ? logins : 0 %></p></div>
+      <div class="stat-card"><h4>Signups (since server start)</h4><p id="c-signups"><%= typeof signups !== 'undefined' ? signups : 0 %></p></div>
+      <div class="stat-card"><h4>Total users</h4><p id="c-users"><%= typeof totalUsers !== 'undefined' ? totalUsers : 0 %></p></div>
+      <div class="stat-card"><h4>Total posts</h4><p id="c-posts"><%= typeof totalPosts !== 'undefined' ? totalPosts : 0 %></p></div>
+    </div>
+
+    <section class="charts" aria-label="analytics charts">
+      <div class="chart-card">
+        <div class="controls">
+          <label for="intradayDate">Intraday (hourly) for:</label>
+          <input id="intradayDate" type="date" />
+          <button id="intradayRefresh">Refresh</button>
+        </div>
+        <canvas id="intradayChart" height="160" aria-label="Hourly visits chart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="controls">
+          <label for="weeklyDays">Weekly averages over last</label>
+          <select id="weeklyDays">
+            <option value="28">28 days (4 weeks)</option>
+            <option value="14">14 days (2 weeks)</option>
+            <option value="7">7 days (1 week)</option>
+            <option value="56">56 days (8 weeks)</option>
+          </select>
+          <button id="weeklyRefresh">Refresh</button>
+        </div>
+        <canvas id="weeklyChart" height="160" aria-label="Weekly averages chart"></canvas>
+      </div>
+
+      <div class="chart-card wide">
+        <div class="controls">
+          <label for="timeseriesFrom">From</label>
+          <input id="timeseriesFrom" type="date" />
+          <label for="timeseriesTo">To</label>
+          <input id="timeseriesTo" type="date" />
+          <button id="timeseriesRefresh">Refresh</button>
+        </div>
+        <canvas id="timeseriesChart" height="220" aria-label="Daily visits time series"></canvas>
+        <p class="meta">Vertical lines mark version releases (from your JSON file)</p>
+      </div>
+    </section>
+
+    <section style="margin-top:1rem;">
+      <p class="meta">Notes: Series and aggregates are computed from events persisted to the database. Version markers are read from <code>v-blogger/data/version_releases.json</code>.</p>
+    </section>
+
+    <p style="margin-top:1.25rem;"><a class="small-link" href="/">← Back to Home</a></p>
+  </main>
+
+  <%- include('footer') %>
+
+  <script>
+    // Try to register the annotation plugin in a robust way.
+    // Different bundling / CDN setups expose the plugin under different global names,
+    // so check common possibilities and only register if available.
+    (function registerAnnotationPlugin() {
+      try {
+        const candidates = [
+          // UMD build common name
+          window['chartjs-plugin-annotation'],
+          // alternate global names some bundlers may use
+          window.chartjsPluginAnnotation,
+          window.ChartjsPluginAnnotation,
+          // plugin may have been attached to the module system as ChartAnnotation
+          window.ChartAnnotation,
+        ];
+        const plugin = candidates.find(p => typeof p !== 'undefined' && p !== null);
+        if (plugin && typeof Chart.register === 'function') {
+          Chart.register(plugin);
+        }
+      } catch (e) {
+        // don't block analytics if registration fails; annotation will simply be unavailable
+        // keep a lightweight console hint for debugging in dev
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('Annotation plugin not registered or unavailable:', e && e.message ? e.message : e);
+        }
+      }
+    })();
+
+    function isoDateYMD(d) {
+      return d.toISOString().slice(0,10);
+    }
+
+    function formatDateReadable(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00Z');
+      return d.toLocaleDateString();
+    }
+
+    // Setup default dates
+    const today = new Date();
+    const defaultTo = isoDateYMD(today);
+    const defaultFrom = isoDateYMD(new Date(today.getTime() - 29*24*60*60*1000)); // last 30 days
+
+    document.getElementById('intradayDate').value = defaultTo;
+    document.getElementById('timeseriesTo').value = defaultTo;
+    document.getElementById('timeseriesFrom').value = defaultFrom;
+
+    // Chart instances
+    let intradayChart, weeklyChart, timeseriesChart;
+
+    // Fetch helper with JSON and simple error handling
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || 'Request failed: ' + res.status);
+      }
+      return res.json();
+    }
+
+    // Intraday (hourly)
+    async function renderIntraday(date) {
+      const url = `/api/analytics/hourly?date=${encodeURIComponent(date)}&type=visit`;
+      const data = await fetchJson(url);
+      const labels = data.labels || Array.from({length:24}, (_,i)=>String(i).padStart(2,'0'));
+      const counts = data.data || [];
+      const ctx = document.getElementById('intradayChart').getContext('2d');
+      if (intradayChart) intradayChart.destroy();
+      intradayChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Visits',
+            data: counts,
+            backgroundColor: 'rgba(54,162,235,0.6)',
+            borderColor: 'rgba(54,162,235,1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Hour (UTC)' } },
+            y: { title: { display: true, text: 'Visits' }, beginAtZero: true }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Weekly averages
+    async function renderWeekly(days) {
+      const url = `/api/analytics/weekly-averages?days=${encodeURIComponent(days)}&type=visit`;
+      const data = await fetchJson(url);
+      const labels = data.days || ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const values = data.averages || [];
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
+      if (weeklyChart) weeklyChart.destroy();
+      weeklyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: `Avg per weekday (last ${days} days)`,
+            data: values,
+            backgroundColor: 'rgba(255,159,64,0.6)',
+            borderColor: 'rgba(255,159,64,1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, title: { display: true, text: 'Average visits' } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Timeseries with version markers
+    async function renderTimeseries(from, to) {
+      const url = `/api/analytics/daily?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&type=visit`;
+      const series = await fetchJson(url);
+      // series is array of { date, count }
+      const labels = series.map(s => s.date);
+      const data = series.map(s => s.count);
+
+      // load version markers
+      let markers = [];
+      try {
+        markers = await fetchJson('/api/analytics/version-markers');
+      } catch (err) {
+        console.warn('Could not load version markers:', err);
+      }
+
+      const ctx = document.getElementById('timeseriesChart').getContext('2d');
+      if (timeseriesChart) timeseriesChart.destroy();
+
+      // Prepare annotations for version markers (robust handling).
+      // The API may return either an array or an object like { markers: [...] }.
+      // Also different versions of the annotation plugin accept either 'value' or xMin/xMax;
+      // we set both so the plugin can consume whichever form it expects.
+      let annotations = {};
+      let markerArray = [];
+      if (Array.isArray(markers)) {
+        markerArray = markers;
+      } else if (markers && Array.isArray(markers.markers)) {
+        markerArray = markers.markers;
+      } else {
+        markerArray = [];
+      }
+      markerArray.forEach((m, idx) => {
+        // Accept several possible timestamp fields and normalize to YYYY-MM-DD
+        const tsRaw = (m && (m.ts || m.timestamp || m.date)) || null;
+        const xValue = tsRaw ? (typeof tsRaw === 'string' ? tsRaw.slice(0,10) : new Date(tsRaw).toISOString().slice(0,10)) : null;
+        if (!xValue) return;
+        annotations['v' + idx] = {
+          type: 'line',
+          // prefer value (many annotation plugin versions accept this), include fallbacks
+          scaleID: 'x',
+          value: xValue,
+          xMin: xValue,
+          xMax: xValue,
+          borderColor: 'rgba(200,20,20,0.8)',
+          borderWidth: 1,
+          label: {
+            enabled: true,
+            position: 'start',
+            content: m.version || m.label || '',
+            backgroundColor: 'rgba(200,20,20,0.85)',
+            color: '#fff'
+          }
+        };
+      });
+
+      timeseriesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Daily visits',
+            data,
+            fill: false,
+            borderColor: 'rgba(75,192,192,1)',
+            tension: 0.15,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Date (UTC)' } },
+            y: { title: { display: true, text: 'Visits' }, beginAtZero: true }
+          },
+          plugins: {
+            legend: { display: false },
+            annotation: { annotations }
+          }
+        }
+      });
+    }
+
+    // Initialize charts and wire controls
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // initial renders
+        await renderIntraday(document.getElementById('intradayDate').value);
+        await renderWeekly(document.getElementById('weeklyDays').value);
+        await renderTimeseries(document.getElementById('timeseriesFrom').value, document.getElementById('timeseriesTo').value);
+      } catch (err) {
+        console.error('Initial chart render failed:', err);
+      }
+
+      document.getElementById('intradayRefresh').addEventListener('click', async () => {
+        try { await renderIntraday(document.getElementById('intradayDate').value); }
+        catch (err) { alert('Failed to load intraday: ' + err.message); }
+      });
+
+      document.getElementById('weeklyRefresh').addEventListener('click', async () => {
+        try { await renderWeekly(document.getElementById('weeklyDays').value); }
+        catch (err) { alert('Failed to load weekly averages: ' + err.message); }
+      });
+
+      document.getElementById('timeseriesRefresh').addEventListener('click', async () => {
+        try { await renderTimeseries(document.getElementById('timeseriesFrom').value, document.getElementById('timeseriesTo').value); }
+        catch (err) { alert('Failed to load timeseries: ' + err.message); }
+      });
+    });
+  </script>
+</body>
+</html>
