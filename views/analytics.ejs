@@ -7,17 +7,46 @@
   <title>Analytics - V-Blogger</title>
 
   <style>
-    .analytics-container { max-width: 1100px; margin: 2rem auto; padding: 1rem; }
-    .top-stats { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
-    .stat-card { flex:1 1 180px; background:#fff; border:1px solid #e1e1e1; padding:1rem; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.03); }
-    .stat-card h4 { margin:0 0 .25rem 0; font-size:.9rem; color:#333; }
-    .stat-card p { margin:0; font-size:1.4rem; font-weight:700; color:#111; }
-    .charts { display:grid; grid-template-columns: 1fr; gap:1.25rem; margin-top:1.25rem; }
-    @media(min-width:1000px){ .charts { grid-template-columns: 1fr 1fr; } .charts .wide { grid-column: 1 / -1; } }
-    .chart-card { background:#fff; border:1px solid #e9e9e9; padding:1rem; border-radius:6px; }
-    .meta { color:#666; font-size:.9rem; margin-top:.5rem; }
-    .controls { display:flex; gap:.5rem; align-items:center; margin-bottom:.75rem; }
+    /* Layout adjustments for mobile-first responsiveness */
+    .analytics-container { max-width: 1100px; margin: 1rem auto; padding: 1rem; box-sizing: border-box; }
+    .top-stats { display:flex; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .stat-card { flex:1 1 140px; background:#fff; border:1px solid #e1e1e1; padding:.75rem; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.03); min-width:120px; }
+    .stat-card h4 { margin:0 0 .25rem 0; font-size:.85rem; color:#333; }
+    .stat-card p { margin:0; font-size:1.1rem; font-weight:700; color:#111; }
+
+    /* Charts are single-column by default to fit narrow screens */
+    .charts { display:grid; grid-template-columns: 1fr; gap:1rem; margin-top:1rem; }
+
+    /* Wider viewports: two-column layout with wide charts spanning both columns */
+    @media(min-width:900px){
+      .charts { grid-template-columns: 1fr 1fr; gap:1.25rem; }
+      .charts .wide { grid-column: 1 / -1; }
+    }
+
+    .chart-card { background:#fff; border:1px solid #e9e9e9; padding:.75rem; border-radius:8px; }
+    .meta { color:#666; font-size:.85rem; margin-top:.5rem; }
+
+    /* Controls stack on small screens, align horizontally on larger screens */
+    .controls { display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem; flex-wrap:wrap; }
+    .controls label { font-size:.9rem; }
+    .controls input[type="date"], .controls select { padding:.5rem .6rem; font-size:.95rem; border:1px solid #ddd; border-radius:6px; }
+
+    /* Touch-friendly buttons */
+    .btn { padding:.6rem .75rem; font-size:0.95rem; border-radius:8px; border:none; background:#2b6cb0; color:#fff; cursor:pointer; touch-action:manipulation; }
+    .btn:active { transform:translateY(1px); }
+
+    /* Make canvases fluid and avoid fixed heights causing overflow on mobile */
+    canvas { width:100% !important; height:auto !important; display:block; }
+
     .small-link { font-size:.9rem; color:#0066cc; text-decoration:none; }
+
+    /* Minor visual improvements for small screens */
+    @media(max-width:420px){
+      .stat-card p { font-size:1rem; }
+      .controls { gap:.4rem; }
+      .btn { width:100%; padding:.75rem; font-size:1rem; }
+      .controls input[type="date"], .controls select { width:100%; }
+    }
   </style>
 
   <!-- Chart.js + annotation plugin -->
@@ -41,7 +70,7 @@
         <div class="controls">
           <label for="intradayDate">Intraday (hourly) for:</label>
           <input id="intradayDate" type="date" />
-          <button id="intradayRefresh">Refresh</button>
+          <button id="intradayRefresh" class="btn" type="button">Refresh</button>
         </div>
         <canvas id="intradayChart" height="160" aria-label="Hourly visits chart"></canvas>
       </div>
@@ -55,7 +84,7 @@
             <option value="7">7 days (1 week)</option>
             <option value="56">56 days (8 weeks)</option>
           </select>
-          <button id="weeklyRefresh">Refresh</button>
+          <button id="weeklyRefresh" class="btn" type="button">Refresh</button>
         </div>
         <canvas id="weeklyChart" height="160" aria-label="Weekly averages chart"></canvas>
       </div>
@@ -66,7 +95,7 @@
           <input id="timeseriesFrom" type="date" />
           <label for="timeseriesTo">To</label>
           <input id="timeseriesTo" type="date" />
-          <button id="timeseriesRefresh">Refresh</button>
+          <button id="timeseriesRefresh" class="btn" type="button">Refresh</button>
         </div>
         <canvas id="timeseriesChart" height="220" aria-label="Daily visits time series"></canvas>
         <p class="meta">Vertical lines mark version releases (from your JSON file)</p>
