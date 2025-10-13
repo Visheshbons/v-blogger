@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/styles.css">
     <title>New Post | V-Blogger</title>
+    <!-- Blocker styles moved to public/styles.css (use #blocked-overlay and .blocked-modal, .blocked-login-btn) -->
 </head>
 <body>
     <%- include('header') %>
@@ -19,8 +20,19 @@
                 <label for="content">Content:</label>
                 <textarea id="content" name="content" rows="6" required></textarea>
             </div>
-            <button type="submit">Publish</button>
+            <button type="submit" <%= blocked ? 'disabled' : '' %>>Publish</button>
         </form>
+
+        <% if (blocked) { %>
+        <div id="blocked-overlay" role="dialog" aria-modal="true" aria-labelledby="blocked-title">
+            <div class="blocked-modal">
+                <h3 id="blocked-title">Action Required</h3>
+                <p>You have posted anonymously 2 times already.</p>
+                <p>Please log in to continue.</p>
+                <a href="/login" class="blocked-login-btn">Log in</a>
+            </div>
+        </div>
+        <% } %>
     </main>
     <%- include('footer') %>
 </body>

@@ -72,11 +72,11 @@ article {
 }
 
 article .sent {
-    margin-left: 35%; 
+    margin-left: 35%;
 }
 
 article .received {
-    margin-right: 35%; 
+    margin-right: 35%;
 }
 
 h2 {
@@ -231,7 +231,6 @@ form input[type="submit"]:hover {
     }
 }
 
-
 /* --- Likes & Comments Styling --- */
 
 /* Like button styles */
@@ -248,7 +247,10 @@ form input[type="submit"]:hover {
     padding: 6px 18px;
     font-size: 1em;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s, border 0.2s;
+    transition:
+        background 0.2s,
+        color 0.2s,
+        border 0.2s;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -353,5 +355,117 @@ details summary {
     .comment-form {
         flex-direction: column;
         align-items: stretch;
+    }
+}
+
+/* --- Blocker overlay (moved from inline and restyled to match site theme) ---
+   These rules intentionally use !important to ensure they take precedence over
+   any inline styles so the overlay matches the main stylesheet presentation.
+   Feel free to remove the !important flags after removing the inline <style>
+   block from the template.
+*/
+#blocked-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(34, 34, 34, 0.55) !important; /* subtle dark backdrop */
+    z-index: 9999 !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    backdrop-filter: blur(4px) !important;
+    padding: 20px !important;
+}
+
+/* Modal card */
+#blocked-overlay .blocked-modal {
+    background: #ffffff !important;
+    color: #222 !important;
+    padding: 20px 24px !important;
+    border-radius: 10px !important;
+    max-width: 520px !important;
+    width: 100% !important;
+    box-shadow: 0 8px 24px rgba(17, 17, 17, 0.18) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    text-align: center !important;
+    font-family: inherit !important;
+    transition:
+        transform 160ms ease,
+        opacity 160ms ease !important;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
+
+/* Heading and text */
+#blocked-overlay .blocked-modal h3 {
+    margin: 0 0 8px 0 !important;
+    font-size: 1.15em !important;
+    color: #222 !important;
+    font-weight: 600 !important;
+}
+
+#blocked-overlay .blocked-modal p {
+    margin: 6px 0 !important;
+    color: #444 !important;
+    line-height: 1.4 !important;
+    font-size: 0.98em !important;
+}
+
+/* Emphasized count */
+#blocked-overlay .blocked-modal .anon-count {
+    font-weight: 700 !important;
+    color: #333 !important;
+}
+
+/* Login button — aligned with site's primary button styling */
+.blocked-login-btn {
+    display: inline-block !important;
+    padding: 10px 16px !important;
+    background: #333 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    border-radius: 8px !important;
+    margin-top: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    box-shadow: 0 4px 12px rgba(51, 51, 51, 0.12) !important;
+    transition:
+        background 120ms ease,
+        transform 120ms ease !important;
+}
+
+.blocked-login-btn:hover {
+    background: #444 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Subtle secondary action for users that want to continue anonymously (optional) */
+#blocked-overlay .blocked-modal .blocked-secondary {
+    display: inline-block !important;
+    margin-left: 10px !important;
+    padding: 9px 14px !important;
+    background: transparent !important;
+    color: #333 !important;
+    border: 1px solid rgba(51, 51, 51, 0.08) !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    font-size: 0.95em !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    #blocked-overlay {
+        padding: 12px !important;
+    }
+    #blocked-overlay .blocked-modal {
+        padding: 16px !important;
+    }
+    .blocked-login-btn,
+    #blocked-overlay .blocked-modal .blocked-secondary {
+        width: 100% !important;
+        display: block !important;
+        margin-left: 0 !important;
     }
 }

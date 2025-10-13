@@ -172,7 +172,7 @@ app
       userLoggedInRN = true;
     }
     const isAdmin = Number(req.cookies.id) === 1;
-    res.render("post.ejs", { userLoggedInRN, isAdmin });
+    res.render("post.ejs", { userLoggedInRN, isAdmin, blocked: false });
   })
   .post(
     "/post",
@@ -180,6 +180,7 @@ app
     limitPostLength(["title"], 500),
     async (req, res) => {
       try {
+        const isAdmin = Number(req.cookies.id) === 1;
         statusCode(req, res, 202);
         console.log(req.body); // Debugging line
         let { title, content } = req.body;
@@ -187,6 +188,18 @@ app
           return res.status(400).send("Title and content are required!");
         }
         const userId = req.cookies.id;
+
+        if (!userId) {
+          let userLoggedInRN = false;
+          if (req.cookies.signedOutPosts >= 2) {
+            return res
+              .status(403)
+              .render("post.ejs", { userLoggedInRN, isAdmin, blocked: true });
+          } else {
+            res.cookie("signedOutPosts", (req.cookies.signedOutPosts || 0) + 1);
+          }
+        }
+
         // getNextPostId is now provided by the DB helper and is async — request the next ID
         const newId = await getNextPostId();
         const newPost = new Post(
