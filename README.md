@@ -1,6 +1,6 @@
 # V-Blogger
 
-V-Blogger is a small project I made for fun. It has a basic interface, and supports anonymous posting. It currently only supports text posts, but this will change in the near future (if I remember).
+V-Blogger is a small project I made for fun. It has a basic interface, and supports anonymous posting (limited). It currently only supports text posts, but this will change in the near future (if I remember).
 
 ## Features
 
@@ -12,10 +12,11 @@ V-Blogger is a small project I made for fun. It has a basic interface, and suppo
 - Private user messages (DMs)
 - Markdown support for posts
 - Likes and Comments for posts
+- MongoDB for data persistance
 
 ## Getting Started
 
-You can visit a live demo [here](https://jm8jml4b-3000.aue.devtunnels.ms/) (This may not run, it is port forwarding), or you can run it on your own machine.
+You can visit a live demo [here](https://v-blogger.onrender.com/) (loading time is ~50sec), or you can run it on your own machine.
 
 ### Prerequisites
 
@@ -33,10 +34,10 @@ npm install
 ### Running the App
 
 ```bash
-nodemon index.js
+npm start
 ```
 
-The app will be available at `localhost:3000`.
+The app will be available at `localhost:3000`, or the port specified in `.env` (if detected)
 
 ## Usage
 
@@ -51,6 +52,7 @@ The app will be available at `localhost:3000`.
 1. Account modification
 2. Account deletion
 3. Post editing and deletion
+4. Argon2 Hashing
 
 ## Contributing
 
