@@ -33,14 +33,90 @@ import { SHA1 } from "./sha1.js";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 import hljs from "highlight.js";
+import argon2 from "argon2";
 
 import dotenv from "dotenv";
+
+// PEACE NOT WAR
+import { whatWeWant } from "peacenotwar";
 
 const app = express();
 const port = process.env.PORT || 3000;
 const AutoMaintenanceMode = false;
 
 dotenv.config();
+
+// ---------- Argon2 ---------- \\
+
+// Simple detection if a stored string is an Argon2 hash
+function isArgonHash(str) {
+  if (!str || typeof str !== "string") return false;
+  // Argon2 hashes start with: $argon2i$, $argon2d$, or $argon2id$
+  return /^\$argon2(?:i|d|id)\$/.test(str);
+}
+
+async function verifyPassword(storedHashOrSha1, providedPasswordSha1) {
+  // storedHashOrSha1 = what you have in DB (either Argon2 hash or legacy SHA1 hex)
+  // providedPasswordSha1 = what client sends (they hash the password client-side to SHA1)
+  try {
+    if (isArgonHash(storedHashOrSha1)) {
+      // stored is Argon2: use argon2.verify against the client-side SHA1
+      return await argon2.verify(storedHashOrSha1, providedPasswordSha1);
+    } else {
+      // legacy SHA1: stored is the SHA1 hex; compare directly (client already sent SHA1)
+      return storedHashOrSha1 === providedPasswordSha1;
+    }
+  } catch (err) {
+    console.error("verifyPassword error:", err);
+    return false;
+  }
+}
+
+async function hashPassword(sha1Password) {
+  // sha1Password is the client's SHA1 string; we Argon2-hash that
+  try {
+    const hash = await argon2.hash(sha1Password);
+    return hash;
+  } catch (err) {
+    console.error("hashPassword error:", err);
+    throw err;
+  }
+}
+
+// Tests a password string to check if it is an Argon2 hash (sync)
+function verifyArgon2(passwordString) {
+  // return boolean synchronously — used for checking DB values
+  return isArgonHash(passwordString);
+}
+
+// ---------- Upgrade legacy SHA1 users to Argon2 on startup ---------- \\
+
+for (let i = 0; i < users.length; i++) {
+  // users[i].password is either a SHA1 hex or an Argon2 hash
+  const stored = users[i].password;
+  if (verifyArgon2(stored)) {
+    continue; // Already Argon2 hash
+  } else {
+    const username = users[i].username;
+    const SHA1Password = stored;
+    console.info(`
+      [${chalk.cyan("INFO")}]:
+      User ${chalk.green(username)}'s password is being upgraded to Argon2...
+    `);
+    try {
+      const newPassword = await hashPassword(SHA1Password);
+      users[i].password = newPassword;
+      await saveUsers(users);
+      console.info(`
+        [${chalk.cyan("INFO")}]:
+        User ${chalk.green(username)}'s password has been upgraded to Argon2.
+      `);
+    } catch (err) {
+      console.error(`Failed to upgrade password for ${username}:`, err);
+      // continue to next user without crashing server
+    }
+  }
+}
 
 // ---------- Analytics ---------- \\
 let homeVisits = 0;
@@ -175,48 +251,49 @@ app
     res.render("post.ejs", { userLoggedInRN, isAdmin, blocked: false });
   })
   .post(
-    "/post",
-    limitPostLength(["content"], 5000),
-    limitPostLength(["title"], 500),
+    "/login",
+    checkForbiddenChars(["username", "password_sha1"]),
     async (req, res) => {
-      try {
-        const isAdmin = Number(req.cookies.id) === 1;
-        statusCode(req, res, 202);
-        console.log(req.body); // Debugging line
-        let { title, content } = req.body;
-        if (!title || !content) {
-          return res.status(400).send("Title and content are required!");
-        }
-        const userId = req.cookies.id;
-
-        if (!userId) {
-          let userLoggedInRN = false;
-          if (req.cookies.signedOutPosts >= 2) {
-            return res
-              .status(403)
-              .render("post.ejs", { userLoggedInRN, isAdmin, blocked: true });
-          } else {
-            res.cookie("signedOutPosts", (req.cookies.signedOutPosts || 0) + 1);
-          }
-        }
-
-        // getNextPostId is now provided by the DB helper and is async — request the next ID
-        const newId = await getNextPostId();
-        const newPost = new Post(
-          title,
-          content,
-          userId ? Number(userId) : null,
-          undefined,
-          newId,
-        );
-
-        await addPost(newPost);
-        console.log(`New post added: ${title}`);
-        res.status(201).redirect("/");
-      } catch (error) {
-        console.error("Error creating post:", chalk.red(error));
-        return statusCode(req, res, 500);
+      statusCode(req, res, 202);
+      console.log(req.body); // Debugging line
+      const { username, password_sha1 } = req.body;
+      if (!username || !password_sha1) {
+        return res.status(400).send("Username and password are required!");
       }
+
+      // Find the user by username first (synchronously)
+      const user = users.find((u) => u.username === username);
+      if (!user) {
+        console.log(`${chalk.red(`401`)}: Invalid username: ${username}`);
+        return res.status(401).send("Invalid username or password!");
+      }
+
+      // Then verify the provided SHA1 against stored value (argon or legacy)
+      const ok = await verifyPassword(user.password, password_sha1);
+      if (!ok) {
+        console.log(`${chalk.red(`401`)}: Bad password for user: ${username}`);
+        return res.status(401).send("Invalid username or password!");
+      }
+
+      console.log(`User logged in: ${username}`);
+
+      // Analytics: successful login
+      logins++;
+      if (typeof recordAnalyticsEvent === "function") {
+        recordAnalyticsEvent({
+          type: "login",
+          ts: new Date().toISOString(),
+          meta: { username },
+        }).catch((err) =>
+          console.error("Analytics record error:", chalk.red(err)),
+        );
+      }
+
+      res
+        .status(200)
+        .cookie("loggedIn", true)
+        .cookie("id", user.id)
+        .redirect("/");
     },
   );
 
@@ -239,8 +316,10 @@ app
       statusCode(req, res, 202);
       console.log(req.body); // Debugging line
       const { username, password_sha1 } = req.body;
+
       const user = users.find(
-        (u) => u.username === username && u.password === password_sha1,
+        (u) =>
+          u.username === username && verifyPassword(u.password, password_sha1),
       );
       if (!user) {
         return res.status(401).send("Invalid username or password!");
