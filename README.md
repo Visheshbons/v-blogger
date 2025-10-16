@@ -13,6 +13,7 @@ V-Blogger is a small project I made for fun. It has a basic interface, and suppo
 - Markdown support for posts
 - Likes and Comments for posts
 - MongoDB for data persistance
+- Argon2 password hashing
 
 ## Getting Started
 
@@ -52,7 +53,10 @@ The app will be available at `localhost:3000`, or the port specified in `.env` (
 1. Account modification
 2. Account deletion
 3. Post editing and deletion
-4. Argon2 Hashing
+4. ~~Argon2 Hashing~~ _Completed (`v3.2.0` and above)_
+5. Image posts
+6. Post sharing
+7. Post categories
 
 ## Contributing
 
@@ -68,4 +72,4 @@ For questions or support, please open an issue on GitHub.
 
 <hr>
 
-<small>Up to date as of `v2.1.0`</small>
+<small>Up to date as of `v3.2.0`</small>
