@@ -28,6 +28,7 @@ import {
   getAnalyticsDailyTotals,
   getAnalyticsWeeklyAverages,
   loadVersionMarkers,
+  db,
 } from "./appConfig.js";
 import { SHA1 } from "./sha1.js";
 import { marked } from "marked";
@@ -36,28 +37,22 @@ import hljs from "highlight.js";
 import argon2 from "argon2";
 import multer from "multer";
 import path from "path";
+import { ObjectId } from "mongodb";
 
 import dotenv from "dotenv";
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "public/uploads");
-    },
-    filename: function (req, file, cb) {
-      const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname) || "";
-      cb(null, unique + ext);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: function (req, file, cb) {
     const allowed = /jpeg|jpg|png|gif/;
-    const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
-    if (allowed.test(ext)) {
+    const mimetype = (file.mimetype || "").toLowerCase();
+    // Accept real image mimetypes and check subtype against allowed list
+    const parts = mimetype.split("/");
+    if (parts[0] === "image" && parts[1] && allowed.test(parts[1])) {
       cb(null, true);
     } else {
-      // reject non-image uploads silently (route can still handle absence)
+      // reject non-image uploads
       cb(null, false);
     }
   },
@@ -296,13 +291,27 @@ app
           ? Number(req.cookies.id)
           : "Anonymous";
 
-        // If an image was uploaded and accepted by multer, append an image markdown tag.
+        // If an image was uploaded and accepted by multer (in-memory), store it in MongoDB and
+        // append a markdown reference that points to the image-serving route.
         let finalContent = content;
-        if (req.file && req.file.filename) {
-          // Image will be served from /uploads/<filename> thanks to express.static("public")
-          const imageUrl = `/uploads/${req.file.filename}`;
-          // Append an image reference to the post content so markdown rendering will show it
-          finalContent = `${finalContent}\n\n![Post image](${imageUrl})`;
+        if (req.file && req.file.buffer && req.file.mimetype) {
+          try {
+            const imagesCol = db.collection("images");
+            const doc = {
+              filename: req.file.originalname || `upload-${Date.now()}`,
+              mimetype: req.file.mimetype,
+              data: req.file.buffer, // store Buffer directly
+              createdAt: new Date(),
+            };
+            const insertRes = await imagesCol.insertOne(doc);
+            const imgId = insertRes.insertedId;
+            const imageUrl = `/image/${imgId.toString()}`;
+            // Append an image reference so markdown rendering will show the stored image
+            finalContent = `${finalContent}\n\n![Post image](${imageUrl})`;
+          } catch (imgErr) {
+            console.error("Failed to save uploaded image to MongoDB:", imgErr);
+            // continue without failing — image is optional
+          }
         }
 
         const newPost = new Post(title, finalContent, authorId);
@@ -665,6 +674,33 @@ app
 
 // ---------- Secret Routes ---------- \\
 
+// Serve stored images by id: GET /image/:id
+app.get("/image/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) return statusCode(req, res, 400);
+    let objId;
+    try {
+      objId = new ObjectId(id);
+    } catch (e) {
+      return statusCode(req, res, 400);
+    }
+    const imagesCol = db.collection("images");
+    const doc = await imagesCol.findOne({ _id: objId });
+    if (!doc) return statusCode(req, res, 404);
+    // doc.data may be a Buffer or a Binary — convert to Buffer if necessary
+    const buffer = Buffer.isBuffer(doc.data)
+      ? doc.data
+      : Buffer.from(doc.data.buffer || doc.data);
+    res.setHeader("Content-Type", doc.mimetype || "application/octet-stream");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.send(buffer);
+  } catch (err) {
+    console.error("Image serve error:", err);
+    return statusCode(req, res, 500);
+  }
+});
+
 // Analytics page (admin-only) — render EJS page that will fetch aggregated data via API endpoints
 app.get("/analytics", adminOnly, (req, res) => {
   statusCode(req, res, 200);
@@ -805,6 +841,26 @@ app.use((err, req, res, next) => {
 
 // Since the database connection is already initialized in appConfig,
 // we can start the server directly
+app.get("/debug/counters", adminOnly, async (req, res) => {
+  // Return all counter documents for debugging (requires admin)
+  try {
+    statusCode(req, res, 200);
+    const countersCol = db.collection("counters");
+    const counters = await countersCol.find({}).toArray();
+    // Normalize ObjectId/other types if needed by returning plain JSON
+    const normalized = counters.map((c) => {
+      return {
+        _id: c._id,
+        seq: c.seq,
+      };
+    });
+    return res.json(normalized);
+  } catch (err) {
+    console.error("Debug counters error:", err);
+    return statusCode(req, res, 500);
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${chalk.green(port)}`);
 });

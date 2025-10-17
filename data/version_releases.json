@@ -1,5 +1,10 @@
 [
   {
+    "version": "v4-alpha.0.1",
+    "ts": "2025-10-20T00:00:00Z",
+    "notes": "Initial alpha release of v4 with a image posting."
+  }
+  {
     "version": "v3.2.2",
     "ts": "2025-10-18T00:00:00Z",
     "notes": "Fixed a bug where update lines were not rendering."
