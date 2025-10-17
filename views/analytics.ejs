@@ -229,12 +229,23 @@
     // Timeseries with version markers
     async function renderTimeseries(from, to) {
       const url = `/api/analytics/daily?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&type=visit`;
-      const series = await fetchJson(url);
-      // series is array of { date, count }
-      const labels = series.map(s => s.date);
-      const data = series.map(s => s.count);
+      const series = await fetchJson(url); // array of { date, count }
 
-      // load version markers
+      // Create a map for quick lookup
+      const seriesMap = Object.fromEntries(series.map(s => [s.date, s.count]));
+
+      // Generate all dates in range, fill missing with 0
+      const start = new Date(from);
+      const end = new Date(to);
+      const labels = [];
+      const data = [];
+      for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+        const dateStr = d.toISOString().slice(0, 10);
+        labels.push(dateStr);
+        data.push(seriesMap[dateStr] ?? 0);
+      }
+
+      // Load version markers
       let markers = [];
       try {
         markers = await fetchJson('/api/analytics/version-markers');
@@ -245,27 +256,24 @@
       const ctx = document.getElementById('timeseriesChart').getContext('2d');
       if (timeseriesChart) timeseriesChart.destroy();
 
-      // Prepare annotations for version markers (robust handling).
-      // The API may return either an array or an object like { markers: [...] }.
-      // Also different versions of the annotation plugin accept either 'value' or xMin/xMax;
-      // we set both so the plugin can consume whichever form it expects.
-      let annotations = {};
-      let markerArray = [];
-      if (Array.isArray(markers)) {
-        markerArray = markers;
-      } else if (markers && Array.isArray(markers.markers)) {
-        markerArray = markers.markers;
-      } else {
-        markerArray = [];
-      }
+      // Normalize marker structure
+      const markerArray = Array.isArray(markers)
+        ? markers
+        : (markers && Array.isArray(markers.markers)) ? markers.markers : [];
+
+      // Prepare annotations for version markers
+      const annotations = {};
       markerArray.forEach((m, idx) => {
-        // Accept several possible timestamp fields and normalize to YYYY-MM-DD
-        const tsRaw = (m && (m.ts || m.timestamp || m.date)) || null;
-        const xValue = tsRaw ? (typeof tsRaw === 'string' ? tsRaw.slice(0,10) : new Date(tsRaw).toISOString().slice(0,10)) : null;
+        const tsRaw = m?.ts || m?.timestamp || m?.date;
+        const xValue = tsRaw
+          ? (typeof tsRaw === 'string'
+              ? tsRaw.slice(0, 10)
+              : new Date(tsRaw).toISOString().slice(0, 10))
+          : null;
         if (!xValue) return;
+
         annotations['v' + idx] = {
           type: 'line',
-          // prefer value (many annotation plugin versions accept this), include fallbacks
           scaleID: 'x',
           value: xValue,
           xMin: xValue,
@@ -282,6 +290,7 @@
         };
       });
 
+      // Render chart
       timeseriesChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -308,6 +317,7 @@
         }
       });
     }
+
 
     // Initialize charts and wire controls
     document.addEventListener('DOMContentLoaded', async () => {

@@ -587,7 +587,7 @@ async function getAnalyticsWeeklyAverages(days = 28, type = "visit") {
  * Expected JSON format: [{ "version": "v3.0.1", "ts": "2025-10-12T01:02:03Z" }, ...]
  * Returns an array of normalized markers: { version, ts: ISOString }.
  */
-async function loadVersionMarkers(filepath = "./version_releases.json") {
+async function loadVersionMarkers(filepath = "./data/version_releases.json") {
   try {
     const raw = await fs.readFile(filepath, "utf8");
     const parsed = JSON.parse(raw);

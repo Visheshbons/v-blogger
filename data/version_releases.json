@@ -1,7 +1,47 @@
 [
   {
+    "version": "v3.2.2",
+    "ts": "2025-10-18T00:00:00Z",
+    "notes": "Fixed a bug where update lines were not rendering."
+  },
+  {
+    "version": "v3.2.1",
+    "ts": "2025-10-17T00:00:00Z",
+    "notes": "Deleted unupgradeable users instead of silently ignoring hash upgrade errors."
+  },
+  {
+    "version": "v3.2.0",
+    "ts": "2025-10-16T00:00:00Z",
+    "notes": "Added Argon2 password hashing and automatic legacy hash upgrades."
+  },
+  {
+    "version": "v3.1.0",
+    "ts": "2025-10-14T00:00:00Z",
+    "notes": "General touchups, mobile support, analytics, and MongoDB fixes."
+  },
+  {
+    "version": "v3.0.4",
+    "ts": "2025-10-13T00:00:00Z",
+    "notes": "Anonymous posts now correctly display 'anonymous' instead of 'null'."
+  },
+  {
+    "version": "v3.0.3",
+    "ts": "2025-10-13T00:00:00Z",
+    "notes": "Added mobile compatibility for the analytics page."
+  },
+  {
+    "version": "v3.0.2",
+    "ts": "2025-10-13T00:00:00Z",
+    "notes": "Simplified analytics layout by removing header and footer."
+  },
+  {
     "version": "v3.0.1",
     "ts": "2025-10-13T00:00:00Z",
-    "notes": "Added MongoDB, and analytics support."
+    "notes": "Fixed MongoDB issues and added analytics support."
+  },
+  {
+    "version": "v3.0.0",
+    "ts": "2025-10-12T00:00:00Z",
+    "notes": "Implemented MongoDB for persistent chat data."
   }
 ]
