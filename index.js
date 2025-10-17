@@ -34,8 +34,34 @@ import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 import hljs from "highlight.js";
 import argon2 from "argon2";
+import multer from "multer";
+import path from "path";
 
 import dotenv from "dotenv";
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "public/uploads");
+    },
+    filename: function (req, file, cb) {
+      const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname) || "";
+      cb(null, unique + ext);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: function (req, file, cb) {
+    const allowed = /jpeg|jpg|png|gif/;
+    const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
+    if (allowed.test(ext)) {
+      cb(null, true);
+    } else {
+      // reject non-image uploads silently (route can still handle absence)
+      cb(null, false);
+    }
+  },
+});
 
 // PEACE NOT WAR
 import { whatWeWant } from "peacenotwar";
@@ -250,6 +276,56 @@ app
     const isAdmin = Number(req.cookies.id) === 1;
     res.render("post.ejs", { userLoggedInRN, isAdmin, blocked: false });
   })
+  .post(
+    "/post",
+    // Accept a single file field named "imageFile" (optional)
+    upload.single("imageFile"),
+    async (req, res) => {
+      try {
+        statusCode(req, res, 202);
+
+        // Note: the post form currently sends `title` and `content`.
+        // We also support an optional image file (multipart/form-data).
+        const { title, content } = req.body || {};
+        if (!title || !content) {
+          return res.status(400).send("Title and content are required!");
+        }
+
+        // Determine author from cookie if logged in (otherwise 'Anonymous')
+        const authorId = req.cookies.loggedIn
+          ? Number(req.cookies.id)
+          : "Anonymous";
+
+        // If an image was uploaded and accepted by multer, append an image markdown tag.
+        let finalContent = content;
+        if (req.file && req.file.filename) {
+          // Image will be served from /uploads/<filename> thanks to express.static("public")
+          const imageUrl = `/uploads/${req.file.filename}`;
+          // Append an image reference to the post content so markdown rendering will show it
+          finalContent = `${finalContent}\n\n![Post image](${imageUrl})`;
+        }
+
+        const newPost = new Post(title, finalContent, authorId);
+        await addPost(newPost);
+
+        // Persist snapshot to DB (keeps parity with savePost behavior elsewhere)
+        try {
+          await savePosts(posts);
+        } catch (saveErr) {
+          console.error(
+            "Failed to save posts after new post:",
+            chalk.red(saveErr),
+          );
+          // continue — post was already inserted via addPost which inserts the single document
+        }
+
+        res.status(201).redirect("/posts");
+      } catch (err) {
+        console.error("Post creation error:", chalk.red(err));
+        return statusCode(req, res, 500);
+      }
+    },
+  )
   .post(
     "/login",
     checkForbiddenChars(["username", "password_sha1"]),
