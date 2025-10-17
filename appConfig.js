@@ -132,8 +132,7 @@ async function getNextSequence(counterName) {
     { $inc: { seq: 1 } },
     { returnDocument: "after", upsert: true },
   );
-  // return the numeric sequence value (not the whole document)
-  return result.value.seq;
+  return result.value;
 }
 
 // ---------- Classes ---------- \\

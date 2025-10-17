@@ -863,6 +863,15 @@ app.get("/debug/counters", adminOnly, async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server is running on port ${chalk.green(port)}`);
+
+  console.log(chalk.green.bold(`\nPeace Not War ${whatWeWant}`));
+  console.log(
+    chalk.grey.italic.bold(
+      `For the innocent lives of men, women and children lost in war`,
+    ),
+  );
+  console.log(chalk.grey.italic(`Add this protestware to your own project`));
+  console.log(chalk.grey.italic(`npm package: 'peacenotwar'\n`));
 });
 
 import { spawn } from "child_process";
