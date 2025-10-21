@@ -11,7 +11,7 @@
     <%- include('header') %>
     <main>
         <h2>Create a New Post</h2>
-        <form action="/post" method="POST" id="postForm">
+        <form action="/post" method="POST" enctype="multipart/form-data" id="postForm">
             <div>
                 <label for="title">Title:</label>
                 <input type="text" id="title" name="title" required>
@@ -19,6 +19,13 @@
             <div>
                 <label for="content">Content:</label>
                 <textarea id="content" name="content" rows="6" required></textarea>
+            </div>
+            <div> <!-- Images -->
+                <label for="image">Image File:</label>
+                <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif">
+                <div id="imagePreview" style="margin-top:8px;">
+                    <img id="previewImg" src="" alt="" style="max-width:100%; max-height:300px; display:none; border-radius:8px;">
+                </div>
             </div>
             <button type="submit" <%= blocked ? 'disabled' : '' %>>Publish</button>
         </form>
@@ -35,5 +42,29 @@
         <% } %>
     </main>
     <%- include('footer') %>
+
+    <script>
+        (function () {
+            const fileInput = document.getElementById("imageFile");
+            const previewImg = document.getElementById("previewImg");
+            if (!fileInput || !previewImg) return;
+
+            fileInput.addEventListener("change", function () {
+                const file = this.files && this.files[0];
+                if (!file || !file.type || !file.type.startsWith("image/")) {
+                    previewImg.style.display = "none";
+                    previewImg.src = "";
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    previewImg.src = ev.target.result;
+                    previewImg.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
 </body>
 </html>
