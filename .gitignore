@@ -9,3 +9,9 @@ backups/*.log
 
 # MongoDB migration logs
 migration.log
+
+# Firebase
+firebase.json
+firebase-debug.log
+.firebaserc
+public/firebase-init.js

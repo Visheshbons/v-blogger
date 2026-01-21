@@ -21,6 +21,7 @@
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
+    "firebase": "^12.8.0",
     "highlight.js": "^11.11.1",
     "marked": "^16.0.0",
     "mongodb": "^6.20.0",
