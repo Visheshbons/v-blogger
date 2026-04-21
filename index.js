@@ -407,10 +407,10 @@ app
           u.username === username && verifyPassword(u.password, password_sha1),
       );
       if (!user) {
-        return res.status(401).send("Invalid username or password!");
         console.log(
           `${chalk.red(`401`)}: Attempted login with invalid credentials for user: ${username}`,
         );
+        return res.status(401).send("Invalid username or password!");
       }
       console.log(`User logged in: ${username}`);
 
